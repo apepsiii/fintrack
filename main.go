@@ -432,13 +432,14 @@ func main() {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Balance":        formatRupiah(balance),
 			"MonthlyExpense": formatRupiah(monthlyExpense),
+			"TotalIncome":    formatRupiah(totalIncome),
 			"Transactions":   transactions,
 			"User": gin.H{
 				"Name":   user.Name,
 				"Avatar": getAvatarURL(user),
 			},
-			"TopSavings":  topSavings,
-			"TopBudgets":  topBudgets,
+			"TopSavings": topSavings,
+			"TopBudgets": topBudgets,
 		})
 	})
 
