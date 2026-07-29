@@ -252,46 +252,52 @@
 
     <script>
         const DEBT_ID = {{ .Debt.ID }};
-        const DEBT_NAME = {{ printf "%q" .Debt.Name }};
-        const DEBT_TYPE = {{ printf "%q" .Debt.Type }};
-        const CREDITOR = {{ printf "%q" .Debt.Creditor }};
-        const REMAIN = {{ printf "%q" .Debt.FormattedRemain }};
-        const DUE_DATE = {{ printf "%q" .Debt.FormattedDueDate }};
+        const DEBT_NAME = "{{ js .Debt.Name }}";
+        const DEBT_TYPE = "{{ js .Debt.Type }}";
+        const CREDITOR = "{{ js .Debt.Creditor }}";
+        const REMAIN = "{{ js .Debt.FormattedRemain }}";
+        const DUE_DATE = "{{ js .Debt.FormattedDueDate }}";
+        const FOOTER = "\n\n—\n_Pesan ini dikirim melalui FinTrack – Aplikasi Keuangan Pribadi_";
 
         function sendWAReminder() {
             let msg = '';
             if (DEBT_TYPE === 'lend') {
-                msg = `Halo ${CREDITOR}, saya ingin mengingatkan dengan sopan bahwa terdapat piutang atas nama *${DEBT_NAME}* senilai *Rp ${REMAIN}* yang belum dikembalikan.`;
-                if (DUE_DATE) msg += ` Jatuh tempo pada *${DUE_DATE}*.`;
-                msg += `\n\nMohon konfirmasi ketersediaan Anda untuk menyelesaikan pembayaran tersebut. Terima kasih atas perhatian dan kerjasamanya. 🙏`;
+                msg = `Halo ${CREDITOR},\n\nSaya ingin mengingatkan dengan hormat bahwa terdapat tagihan piutang atas nama *${DEBT_NAME}* senilai *Rp ${REMAIN}* yang belum dikembalikan.`;
+                if (DUE_DATE) msg += `\n\nJatuh tempo: *${DUE_DATE}*`;
+                msg += `\n\nMohon kiranya dapat dikonfirmasi ketersediaan waktu untuk penyelesaian pembayaran tersebut. Terima kasih atas perhatian dan kerjasamanya. 🙏`;
             } else {
-                msg = `Halo ${CREDITOR}, saya ingin mengonfirmasi bahwa saya sedang dalam proses penyelesaian pembayaran hutang *${DEBT_NAME}* senilai *Rp ${REMAIN}*.`;
-                if (DUE_DATE) msg += ` Batas waktu pembayaran pada *${DUE_DATE}*.`;
+                msg = `Halo ${CREDITOR},\n\nSaya ingin mengonfirmasi bahwa pembayaran hutang *${DEBT_NAME}* senilai *Rp ${REMAIN}* sedang dalam proses penyelesaian.`;
+                if (DUE_DATE) msg += `\n\nBatas waktu pembayaran: *${DUE_DATE}*`;
                 msg += `\n\nTerima kasih atas kesabaran dan kepercayaan Anda. 🙏`;
             }
-            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
+            msg += FOOTER;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function sendWAPaymentNotif(debtName, creditor, debtType, amountFormatted, isSettled) {
+        function formatRp(num) {
+            return Number(num).toLocaleString('id-ID');
+        }
+
+        function sendWAPaymentNotif(debtName, creditor, debtType, amount, isSettled, remainFormatted) {
+            const amountFmt = formatRp(amount);
             let msg = '';
             if (debtType === 'owe') {
-                msg = `Halo ${creditor}, saya ingin menginformasikan bahwa saya telah melakukan pembayaran hutang *${debtName}* sebesar *Rp ${amountFormatted}*.`;
+                msg = `Halo ${creditor},\n\nSaya ingin menginformasikan bahwa telah dilakukan pembayaran hutang *${debtName}* sebesar *Rp ${amountFmt}*.`;
                 if (isSettled) {
                     msg += `\n\n✅ Hutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas kepercayaan dan kesabaran Anda. 🙏`;
                 } else {
-                    msg += `\n\nSisa hutang masih *Rp ${REMAIN}*. Saya akan segera melunasi sisanya. Terima kasih. 🙏`;
+                    msg += `\n\nSisa hutang yang belum terbayar: *Rp ${remainFormatted}*.\nSaya akan segera melunasi sisanya. Terima kasih. 🙏`;
                 }
             } else {
-                msg = `Halo ${creditor}, terima kasih atas pembayaran *${debtName}* sebesar *Rp ${amountFormatted}* yang telah diterima.`;
+                msg = `Halo ${creditor},\n\nKami mengonfirmasi bahwa pembayaran *${debtName}* sebesar *Rp ${amountFmt}* telah kami terima dengan baik.`;
                 if (isSettled) {
                     msg += `\n\n✅ Piutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas itikad baik Anda. 🙏`;
                 } else {
-                    msg += `\n\nSisa piutang masih *Rp ${REMAIN}*. Terima kasih. 🙏`;
+                    msg += `\n\nSisa tagihan yang belum diselesaikan: *Rp ${remainFormatted}*. Terima kasih. 🙏`;
                 }
             }
-            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
+            msg += FOOTER;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function showToast(message, type = 'success') {
@@ -376,7 +382,8 @@
                     const amountFormatted = Number(data.amount).toLocaleString('id-ID');
                     setTimeout(() => {
                         if (confirm('Kirim notifikasi WhatsApp ke ' + data.creditor + '?')) {
-                            sendWAPaymentNotif(data.debt_name, data.creditor, data.debt_type, amountFormatted, data.is_settled);
+                            const remainFmt = REMAIN;
+                            sendWAPaymentNotif(data.debt_name, data.creditor, data.debt_type, data.amount, data.is_settled, remainFmt);
                         }
                         setTimeout(() => window.location.reload(), 300);
                     }, 600);
