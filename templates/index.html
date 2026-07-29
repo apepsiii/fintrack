@@ -229,7 +229,14 @@
 <div id="trxModalBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeTransactionModal()"></div>
 <div id="trxModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[92vh]">
     <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
-    <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Catat Transaksi</h2>
+    <h2 class="text-xl font-bold text-brand-dark mb-2 text-center">Catat Transaksi</h2>
+    <div class="flex justify-center mb-5">
+        <div class="bg-gray-50 rounded-2xl px-4 py-2 flex items-center gap-2">
+            <i class="ph ph-wallet text-brand-muted text-sm"></i>
+            <span class="text-xs text-brand-muted font-medium">Saldo tersedia:</span>
+            <span class="text-xs font-bold text-brand-dark" id="modalSaldo">Rp {{ .Balance }}</span>
+        </div>
+    </div>
 
     <form action="/transaction" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4 pb-4" id="transactionForm">
         <div id="amountInputContainer">
@@ -361,6 +368,20 @@
     document.getElementById('transactionForm').addEventListener('submit', function(e) {
         const btn = e.submitter;
         if (!btn) return;
+
+        // Validasi saldo jika pengeluaran
+        if (btn.value === 'expense') {
+            const amountVal = parseInt(document.getElementById('amountInput').value) || 0;
+            const saldoText = document.getElementById('modalSaldo').textContent
+                .replace('Rp ', '').replace(/\./g, '');
+            const saldo = parseInt(saldoText) || 0;
+            if (amountVal > saldo) {
+                showToast(`Saldo tidak cukup! Tersedia Rp ${saldo.toLocaleString('id-ID')}`, 'error');
+                e.preventDefault();
+                return;
+            }
+        }
+
         const orig = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>';

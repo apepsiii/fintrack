@@ -209,9 +209,21 @@ func main() {
 	}
 	gin.SetMode(ginMode)
 
+	// Extract static assets from binary to disk
+	baseDir := "."
+	if err := extractAssets(baseDir); err != nil {
+		log.Printf("Warning: asset extraction: %v", err)
+	}
+
 	router := gin.Default()
-	router.LoadHTMLGlob("templates/*")
-	
+
+	// Load templates from embedded FS
+	templ, err := parseEmbeddedTemplates()
+	if err != nil {
+		log.Fatal("Failed to load templates:", err)
+	}
+	router.SetHTMLTemplate(templ)
+
 	// Serve static files (PWA assets)
 	router.Static("/static", "./static")
 
