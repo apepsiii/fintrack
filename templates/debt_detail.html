@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>{{ .Debt.Name }} - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/static/dark-mode.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', limeDark: '#a3d124', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+        <!-- Header -->
+        <header class="pt-8 px-6 flex justify-between items-center mb-4">
+            <a href="/debt" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="ph ph-caret-left text-xl text-brand-dark"></i>
+            </a>
+            <h1 class="text-base font-bold text-brand-dark truncate mx-3 flex-1 text-center">{{ .Debt.Name }}</h1>
+            <button onclick="openEditModal()" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="ph ph-pencil-simple text-xl text-brand-dark"></i>
+            </button>
+        </header>
+
+        <!-- Hero Card -->
+        <section class="px-6 mb-5">
+            {{ if eq .Debt.Type "owe" }}
+            <div class="rounded-3xl p-6 relative overflow-hidden shadow-lg bg-gradient-to-br from-red-500 to-red-400">
+            {{ else }}
+            <div class="rounded-3xl p-6 relative overflow-hidden shadow-lg bg-gradient-to-br from-brand-dark to-green-800">
+            {{ end }}
+                <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                                <i class="ph {{ if eq .Debt.Type "owe" }}ph-arrow-up-right{{ else }}ph-arrow-down-left{{ end }} text-2xl text-white"></i>
+                            </div>
+                            <div>
+                                <p class="text-white font-bold text-base">{{ .Debt.Name }}</p>
+                                <p class="text-white/70 text-xs">
+                                    {{ if eq .Debt.Type "owe" }}Hutang ke{{ else }}Piutang dari{{ end }}: <span class="font-semibold text-white">{{ .Debt.Creditor }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1.5 rounded-xl {{ if eq .Debt.Type "owe" }}bg-red-600 text-white{{ else }}bg-brand-lime text-brand-dark{{ end }}">
+                            {{ if eq .Debt.Type "owe" }}Hutang{{ else }}Piutang{{ end }}
+                        </span>
+                    </div>
+
+                    <p class="text-white/70 text-xs mb-1">Sisa {{ if eq .Debt.Type "owe" }}Hutang{{ else }}Piutang{{ end }}</p>
+                    <h2 class="text-3xl font-extrabold text-white mb-1">Rp {{ .Debt.FormattedRemain }}</h2>
+                    <p class="text-white/70 text-xs mb-4">dari total Rp {{ .Debt.FormattedTotal }}</p>
+
+                    <!-- Progress bar -->
+                    <div class="w-full bg-white/20 rounded-full h-3 mb-2">
+                        <div class="bg-white h-3 rounded-full transition-all duration-1000" style="width: {{ .Debt.Percentage }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-white/70">
+                        <span>{{ .Debt.Percentage }}% terbayar (Rp {{ .Debt.FormattedPaid }})</span>
+                        {{ if .Debt.FormattedDueDate }}
+                        <span class="{{ if .Debt.IsOverdue }}text-yellow-300 font-bold{{ end }}">
+                            {{ if .Debt.IsOverdue }}Lewat jatuh tempo!{{ else }}Jatuh tempo: {{ .Debt.FormattedDueDate }}{{ end }}
+                        </span>
+                        {{ end }}
+                    </div>
+
+                    {{ if .Debt.IsSettled }}
+                    <div class="mt-3 bg-white/20 rounded-xl px-3 py-2 flex items-center gap-2">
+                        <i class="ph ph-check-circle text-white text-lg"></i>
+                        <span class="text-white font-bold text-sm">✓ Lunas!</span>
+                    </div>
+                    {{ end }}
+
+                    {{ if .Debt.Note }}
+                    <div class="mt-3 bg-white/10 rounded-xl px-3 py-2">
+                        <p class="text-white/60 text-[10px]">Catatan</p>
+                        <p class="text-white text-xs font-medium">{{ .Debt.Note }}</p>
+                    </div>
+                    {{ end }}
+                </div>
+            </div>
+        </section>
+
+        <!-- Action Buttons -->
+        {{ if not .Debt.IsSettled }}
+        <section class="px-6 mb-5">
+            <div class="flex gap-3">
+                <button onclick="openPayModal()" class="flex-1 {{ if eq .Debt.Type "owe" }}bg-red-500 hover:bg-red-600{{ else }}bg-brand-lime hover:bg-brand-limeDark{{ end }} {{ if eq .Debt.Type "owe" }}text-white{{ else }}text-brand-dark{{ end }} py-3.5 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph ph-money text-lg"></i>
+                    {{ if eq .Debt.Type "owe" }}Catat Pembayaran{{ else }}Catat Penerimaan{{ end }}
+                </button>
+                <button onclick="confirmDelete()" class="w-12 h-12 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl flex items-center justify-center transition active:scale-95">
+                    <i class="ph ph-trash text-xl"></i>
+                </button>
+            </div>
+        </section>
+        {{ else }}
+        <section class="px-6 mb-5">
+            <div class="flex gap-3">
+                <div class="flex-1 bg-brand-lime/10 border border-brand-lime/30 rounded-2xl py-3.5 flex items-center justify-center gap-2">
+                    <i class="ph ph-check-circle text-brand-dark text-lg"></i>
+                    <span class="text-brand-dark font-bold text-sm">Sudah Lunas</span>
+                </div>
+                <button onclick="confirmDelete()" class="w-12 h-12 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl flex items-center justify-center transition active:scale-95">
+                    <i class="ph ph-trash text-xl"></i>
+                </button>
+            </div>
+        </section>
+        {{ end }}
+
+        <!-- Payment History -->
+        <section class="px-6 pb-8 flex-1 overflow-y-auto">
+            <h3 class="text-sm font-bold text-brand-dark mb-4">Riwayat Pembayaran</h3>
+
+            {{ if .Payments }}
+            <div class="flex flex-col gap-3">
+                {{ range .Payments }}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center">
+                            <i class="ph ph-money text-brand-dark text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-brand-dark">Pembayaran</p>
+                            <p class="text-[11px] text-brand-muted">{{ .FormattedDate }}{{ if .Note }} · {{ .Note }}{{ end }}</p>
+                        </div>
+                    </div>
+                    <p class="text-sm font-bold text-brand-dark">-Rp {{ .FormattedAmount }}</p>
+                </div>
+                {{ end }}
+            </div>
+            {{ else }}
+            <div class="text-center py-8">
+                <i class="ph ph-clock-counter-clockwise text-4xl text-gray-200 mb-3"></i>
+                <p class="text-sm text-brand-muted">Belum ada pembayaran</p>
+            </div>
+            {{ end }}
+        </section>
+    </main>
+
+    <!-- Pay Modal -->
+    <div id="payBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closePayModal()"></div>
+    <div id="payModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">
+            {{ if eq .Debt.Type "owe" }}Catat Pembayaran{{ else }}Catat Penerimaan{{ end }}
+        </h2>
+
+        <form id="payForm" class="flex flex-col gap-4 pb-4">
+            <div class="bg-gray-50 rounded-2xl p-3 flex justify-between text-sm">
+                <span class="text-brand-muted font-medium">Sisa</span>
+                <span class="font-extrabold text-brand-dark">Rp {{ .Debt.FormattedRemain }}</span>
+            </div>
+
+            <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold text-xl">Rp</span>
+                <input type="number" name="amount" id="payAmount" placeholder="0" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-3xl font-bold rounded-2xl pl-14 pr-4 py-5 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-300">
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-note text-brand-dark"></i>
+                </div>
+                <input type="text" name="note" placeholder="Catatan (opsional)"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+            </div>
+
+            <button type="submit" id="btnPaySubmit"
+                class="w-full {{ if eq .Debt.Type "owe" }}bg-red-500 hover:bg-red-600 text-white{{ else }}bg-brand-lime hover:bg-brand-limeDark text-brand-dark{{ end }} py-4 rounded-2xl font-bold text-base transition active:scale-95 flex items-center justify-center gap-2">
+                <i class="ph ph-check text-lg"></i> Konfirmasi
+            </button>
+        </form>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div id="editModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[85vh]">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Edit Catatan</h2>
+
+        <form id="editForm" class="flex flex-col gap-4 pb-4">
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-pencil-simple text-brand-dark"></i>
+                </div>
+                <input type="text" name="name" value="{{ .Debt.Name }}" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-user text-brand-dark"></i>
+                </div>
+                <input type="text" name="creditor" value="{{ .Debt.Creditor }}" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold">Rp</span>
+                <input type="number" name="total_amount" value="{{ .Debt.TotalAmount }}" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-2xl font-bold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime">
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-calendar text-brand-dark"></i>
+                </div>
+                <input type="date" name="due_date" value="{{ .Debt.DueDate }}"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-note text-brand-dark"></i>
+                </div>
+                <input type="text" name="note" value="{{ .Debt.Note }}" placeholder="Catatan"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm placeholder-gray-400">
+            </div>
+            <button type="submit" class="w-full bg-brand-dark text-white py-4 rounded-2xl font-bold text-base transition active:scale-95">
+                Simpan Perubahan
+            </button>
+        </form>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        const DEBT_ID = {{ .Debt.ID }};
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            msg.textContent = message;
+            if (type === 'success') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            } else {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        function openPayModal() {
+            document.getElementById('payAmount').value = '';
+            document.getElementById('payBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('payBackdrop').classList.remove('opacity-0');
+                document.getElementById('payModal').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closePayModal() {
+            document.getElementById('payBackdrop').classList.add('opacity-0');
+            document.getElementById('payModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('payBackdrop').classList.add('hidden'), 300);
+        }
+
+        function openEditModal() {
+            document.getElementById('editBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('editBackdrop').classList.remove('opacity-0');
+                document.getElementById('editModal').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editBackdrop').classList.add('opacity-0');
+            document.getElementById('editModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('editBackdrop').classList.add('hidden'), 300);
+        }
+
+        async function confirmDelete() {
+            if (!confirm('Yakin ingin menghapus catatan ini? Semua riwayat pembayaran akan dihapus.')) return;
+            try {
+                const res = await fetch(`/api/debt/${DEBT_ID}`, { method: 'DELETE' });
+                if (res.ok) {
+                    window.location.href = '/debt';
+                } else {
+                    showToast('Gagal menghapus', 'error');
+                }
+            } catch (e) {
+                showToast('Gagal menghapus', 'error');
+            }
+        }
+
+        document.getElementById('payForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnPaySubmit');
+            const origHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>';
+
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch(`/api/debt/${DEBT_ID}/pay`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    closePayModal();
+                    showToast(data.message || 'Pembayaran berhasil dicatat');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Terjadi kesalahan', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = origHTML;
+                }
+            } catch (err) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+                btn.innerHTML = origHTML;
+            }
+        });
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch(`/api/debt/${DEBT_ID}`, { method: 'PUT', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    closeEditModal();
+                    showToast('Berhasil diperbarui');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Gagal memperbarui', 'error');
+                }
+            } catch (err) {
+                showToast('Terjadi kesalahan', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

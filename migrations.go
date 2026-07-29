@@ -173,6 +173,37 @@ func RunMigrations(db *sql.DB) error {
 				);
 			`,
 		},
+		{
+			version: 9,
+			name:    "debt_tracker",
+			sql: `
+				CREATE TABLE IF NOT EXISTS debts (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					user_id INTEGER NOT NULL,
+					name TEXT NOT NULL,
+					type TEXT NOT NULL DEFAULT 'owe',
+					total_amount INTEGER NOT NULL,
+					paid_amount INTEGER NOT NULL DEFAULT 0,
+					creditor TEXT NOT NULL,
+					due_date TEXT,
+					note TEXT,
+					is_settled INTEGER NOT NULL DEFAULT 0,
+					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					FOREIGN KEY(user_id) REFERENCES users(id)
+				);
+
+				CREATE TABLE IF NOT EXISTS debt_payments (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					debt_id INTEGER NOT NULL,
+					user_id INTEGER NOT NULL,
+					amount INTEGER NOT NULL,
+					note TEXT,
+					date DATETIME DEFAULT CURRENT_TIMESTAMP,
+					FOREIGN KEY(debt_id) REFERENCES debts(id),
+					FOREIGN KEY(user_id) REFERENCES users(id)
+				);
+			`,
+		},
 	}
 
 	// Get current migration version

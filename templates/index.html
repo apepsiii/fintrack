@@ -49,6 +49,8 @@
         </a>
     </header>
 
+    <input type="hidden" id="balanceRaw" value="{{ .BalanceRaw }}">
+
     <!-- Balance Card — compact -->
     <section class="px-6 mb-5">
         <div class="bg-brand-dark rounded-3xl px-5 py-5 relative overflow-hidden">
@@ -239,6 +241,11 @@
     </div>
 
     <form action="/transaction" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4 pb-4" id="transactionForm">
+        <!-- Saldo error -->
+        <div id="saldoError" class="hidden bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-center gap-2">
+            <i class="ph ph-warning-circle text-red-500 text-lg shrink-0"></i>
+            <p class="text-sm font-semibold text-red-600" id="saldoErrorMsg"></p>
+        </div>
         <div id="amountInputContainer">
             <div class="relative flex gap-2 items-center">
                 <div class="relative flex-1">
@@ -369,14 +376,25 @@
         const btn = e.submitter;
         if (!btn) return;
 
-        // Validasi saldo jika pengeluaran
+        const saldoError = document.getElementById('saldoError');
+        const saldoErrorMsg = document.getElementById('saldoErrorMsg');
+        saldoError.classList.add('hidden');
+
         if (btn.value === 'expense') {
             const amountVal = parseInt(document.getElementById('amountInput').value) || 0;
-            const saldoText = document.getElementById('modalSaldo').textContent
-                .replace('Rp ', '').replace(/\./g, '');
-            const saldo = parseInt(saldoText) || 0;
-            if (amountVal > saldo) {
-                showToast(`Saldo tidak cukup! Tersedia Rp ${saldo.toLocaleString('id-ID')}`, 'error');
+            const balanceRaw = parseInt(document.getElementById('balanceRaw').value) || 0;
+
+            if (amountVal <= 0) {
+                saldoErrorMsg.textContent = 'Nominal harus lebih dari 0.';
+                saldoError.classList.remove('hidden');
+                e.preventDefault();
+                return;
+            }
+
+            if (amountVal > balanceRaw) {
+                const formatted = new Intl.NumberFormat('id-ID').format(balanceRaw);
+                saldoErrorMsg.textContent = `Saldo tidak mencukupi. Tersedia: Rp ${formatted}`;
+                saldoError.classList.remove('hidden');
                 e.preventDefault();
                 return;
             }

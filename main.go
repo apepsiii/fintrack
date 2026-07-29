@@ -443,6 +443,7 @@ func main() {
 
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Balance":        formatRupiah(balance),
+			"BalanceRaw":     balance,
 			"MonthlyExpense": formatRupiah(monthlyExpense),
 			"TotalIncome":    formatRupiah(totalIncome),
 			"Transactions":   transactions,
@@ -1266,6 +1267,29 @@ func main() {
 			return
 		}
 
+		// Check if this transaction is linked to a savings_transaction
+		var stID, stAmount int
+		var stType, savingsID string
+		linkedErr := db.QueryRow(`
+			SELECT st.id, st.amount, st.type, st.savings_id
+			FROM savings_transactions st
+			WHERE st.linked_transaction_id = ? AND st.user_id = ?
+			LIMIT 1
+		`, transactionID, userID).Scan(&stID, &stAmount, &stType, &savingsID)
+
+		if linkedErr == nil {
+			// Rollback savings current_amount
+			if stType == "deposit" {
+				db.Exec("UPDATE savings SET current_amount = MAX(0, current_amount - ?) WHERE id = ? AND user_id = ?", stAmount, savingsID, userID)
+			} else if stType == "withdraw" {
+				db.Exec("UPDATE savings SET current_amount = current_amount + ? WHERE id = ? AND user_id = ?", stAmount, savingsID, userID)
+			}
+			// Fix is_completed status
+			db.Exec(`UPDATE savings SET is_completed = CASE WHEN current_amount >= target_amount THEN 1 ELSE 0 END WHERE id = ? AND user_id = ?`, savingsID, userID)
+			// Remove the savings_transaction record
+			db.Exec("DELETE FROM savings_transactions WHERE id = ? AND user_id = ?", stID, userID)
+		}
+
 		_, err = db.Exec("DELETE FROM transactions WHERE id = ? AND user_id = ?", transactionID, userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete transaction"})
@@ -1366,6 +1390,7 @@ func main() {
 	RegisterRecurringRoutes(protected)
 	RegisterCategoryRoutes(protected)
 	RegisterAIRoutes(protected)
+	RegisterDebtRoutes(protected)
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {

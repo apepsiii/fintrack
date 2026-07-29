@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>Hutang & Piutang - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/dark-mode.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', limeDark: '#a3d124', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+        .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+        <header class="pt-8 px-6 flex justify-between items-center mb-2">
+            <h1 class="text-xl font-bold text-brand-dark tracking-tight">Hutang & Piutang</h1>
+            <button onclick="openAddModal()" class="w-10 h-10 rounded-full bg-brand-lime flex items-center justify-center transition active:scale-95 text-brand-dark shadow-sm">
+                <i class="ph ph-plus text-xl font-bold"></i>
+            </button>
+        </header>
+
+        <!-- Summary Cards -->
+        <section class="px-6 mb-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-red-50 border border-red-100 rounded-3xl p-4 relative overflow-hidden">
+                    <div class="absolute -right-3 -top-3 w-16 h-16 bg-red-100 rounded-full opacity-50"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center">
+                                <i class="ph ph-arrow-up-right text-red-500 text-sm"></i>
+                            </div>
+                            <p class="text-[10px] font-bold text-red-400 uppercase tracking-wider">Saya Berhutang</p>
+                        </div>
+                        <p class="text-lg font-extrabold text-red-600">Rp {{ .TotalOwe }}</p>
+                        <p class="text-[10px] text-red-400 mt-0.5">Sisa belum lunas</p>
+                    </div>
+                </div>
+                <div class="bg-brand-lime/10 border border-brand-lime/30 rounded-3xl p-4 relative overflow-hidden">
+                    <div class="absolute -right-3 -top-3 w-16 h-16 bg-brand-lime/20 rounded-full opacity-50"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-brand-lime/30 rounded-xl flex items-center justify-center">
+                                <i class="ph ph-arrow-down-left text-brand-dark text-sm"></i>
+                            </div>
+                            <p class="text-[10px] font-bold text-brand-dark/60 uppercase tracking-wider">Saya Piutang</p>
+                        </div>
+                        <p class="text-lg font-extrabold text-brand-dark">Rp {{ .TotalLend }}</p>
+                        <p class="text-[10px] text-brand-muted mt-0.5">Belum dikembalikan</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Tabs -->
+        <section class="px-6 mb-4">
+            <div class="flex gap-2 bg-gray-100 p-1 rounded-2xl">
+                <button onclick="filterDebts('all')" id="tab-all"
+                    class="flex-1 py-2 rounded-xl text-xs font-bold transition tab-btn bg-white text-brand-dark shadow-sm">
+                    Semua
+                </button>
+                <button onclick="filterDebts('owe')" id="tab-owe"
+                    class="flex-1 py-2 rounded-xl text-xs font-bold transition tab-btn text-brand-muted">
+                    Hutang
+                </button>
+                <button onclick="filterDebts('lend')" id="tab-lend"
+                    class="flex-1 py-2 rounded-xl text-xs font-bold transition tab-btn text-brand-muted">
+                    Piutang
+                </button>
+            </div>
+        </section>
+
+        <!-- Debt List -->
+        <section class="px-6 pb-28 flex-1 overflow-y-auto">
+            {{ if .Debts }}
+                {{ $hasActive := false }}
+                {{ range .Debts }}{{ if not .IsSettled }}{{ $hasActive = true }}{{ end }}{{ end }}
+
+                {{ if $hasActive }}
+                <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Belum Lunas</h3>
+                {{ end }}
+
+                {{ range .Debts }}
+                {{ if not .IsSettled }}
+                <a href="/debt/{{ .ID }}" class="block mb-3 debt-item" data-type="{{ .Type }}">
+                    <div class="bg-white border border-gray-100 rounded-3xl p-4 card-shadow hover:shadow-lg transition">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-2xl flex items-center justify-center {{ if eq .Type "owe" }}bg-red-50{{ else }}bg-brand-lime/10{{ end }}">
+                                    <i class="ph {{ if eq .Type "owe" }}ph-arrow-up-right text-red-500{{ else }}ph-arrow-down-left text-brand-dark{{ end }} text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-brand-dark">{{ .Name }}</p>
+                                    <p class="text-[11px] text-brand-muted">
+                                        {{ if eq .Type "owe" }}Ke: {{ else }}Dari: {{ end }}{{ .Creditor }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-extrabold {{ if eq .Type "owe" }}text-red-500{{ else }}text-brand-dark{{ end }}">Rp {{ .FormattedRemain }}</p>
+                                <p class="text-[10px] text-brand-muted">sisa</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="flex justify-between text-[10px] mb-1">
+                                <span class="text-brand-muted">Rp {{ .FormattedPaid }} / Rp {{ .FormattedTotal }}</span>
+                                <span class="font-bold {{ if eq .Type "owe" }}text-red-500{{ else }}text-brand-dark{{ end }}">{{ .Percentage }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                <div class="h-2 rounded-full transition-all duration-700 {{ if eq .Type "owe" }}bg-red-400{{ else }}bg-brand-lime{{ end }}" style="width: {{ .Percentage }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            {{ if .FormattedDueDate }}
+                            <div class="flex items-center gap-1 {{ if .IsOverdue }}text-red-500{{ else }}text-brand-muted{{ end }}">
+                                <i class="ph {{ if .IsOverdue }}ph-warning-circle{{ else }}ph-calendar{{ end }} text-xs"></i>
+                                <span class="text-[10px] font-medium">
+                                    {{ if .IsOverdue }}Lewat jatuh tempo{{ else }}Jatuh tempo: {{ .FormattedDueDate }}{{ end }}
+                                </span>
+                            </div>
+                            {{ else }}
+                            <span class="text-[10px] text-gray-300">Tanpa jatuh tempo</span>
+                            {{ end }}
+                            <i class="ph ph-caret-right text-gray-300 text-sm"></i>
+                        </div>
+                    </div>
+                </a>
+                {{ end }}
+                {{ end }}
+
+                <!-- Settled -->
+                {{ $hasSettled := false }}
+                {{ range .Debts }}{{ if .IsSettled }}{{ $hasSettled = true }}{{ end }}{{ end }}
+
+                {{ if $hasSettled }}
+                <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-2">Lunas ✓</h3>
+                {{ range .Debts }}
+                {{ if .IsSettled }}
+                <a href="/debt/{{ .ID }}" class="block mb-3 debt-item" data-type="{{ .Type }}">
+                    <div class="bg-gray-50 border border-gray-100 rounded-3xl p-4 hover:shadow-md transition opacity-70">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-2xl bg-brand-lime/20 flex items-center justify-center">
+                                    <i class="ph ph-check-circle text-brand-dark text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-brand-dark">{{ .Name }}</p>
+                                    <p class="text-[11px] text-brand-muted">{{ .Creditor }} · Rp {{ .FormattedTotal }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold bg-brand-lime text-brand-dark px-2 py-1 rounded-lg">Lunas</span>
+                                <i class="ph ph-caret-right text-gray-300 text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {{ end }}
+                {{ end }}
+                {{ end }}
+
+            {{ else }}
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <svg class="w-36 h-36 mb-6" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="80" fill="#f1f5f9"/>
+                        <rect x="55" y="65" width="90" height="70" rx="12" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+                        <rect x="67" y="80" width="30" height="6" rx="3" fill="#e5e7eb"/>
+                        <rect x="67" y="92" width="50" height="4" rx="2" fill="#f3f4f6"/>
+                        <rect x="67" y="102" width="40" height="4" rx="2" fill="#f3f4f6"/>
+                        <circle cx="145" cy="145" r="22" fill="#c3f545"/>
+                        <path d="M137 145h16M145 137v16" stroke="#01381b" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <h3 class="text-base font-bold text-brand-dark mb-2">Belum ada catatan hutang</h3>
+                    <p class="text-sm text-brand-muted mb-6 max-w-[230px]">Catat hutang dan piutangmu agar tidak lupa dan mudah dilacak.</p>
+                    <button onclick="openAddModal()" class="bg-brand-lime hover:bg-brand-limeDark text-brand-dark px-6 py-3 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center gap-2">
+                        <i class="ph ph-plus"></i> Tambah Catatan
+                    </button>
+                </div>
+            {{ end }}
+        </section>
+
+        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+            <div class="flex justify-between items-center relative">
+                <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-house text-2xl"></i>
+                    <span class="text-[9px] font-medium">Beranda</span>
+                </a>
+                <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-chart-bar text-2xl"></i>
+                    <span class="text-[9px] font-medium">Statistik</span>
+                </a>
+                <div class="relative -top-6 flex justify-center w-14">
+                    <button onclick="openAddModal()" class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                        <i class="ph ph-plus text-2xl font-bold"></i>
+                    </button>
+                </div>
+                <a href="/savings" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-piggy-bank text-2xl"></i>
+                    <span class="text-[9px] font-medium">Tabungan</span>
+                </a>
+                <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-user text-2xl"></i>
+                    <span class="text-[9px] font-medium">Profil</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+
+    <!-- Add Debt Modal -->
+    <div id="addBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeAddModal()"></div>
+    <div id="addModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[92vh]">
+        <div class="p-6">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Tambah Catatan</h2>
+
+            <form id="addDebtForm" class="flex flex-col gap-4 pb-6">
+
+                <!-- Type Toggle -->
+                <div>
+                    <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Jenis</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="selectDebtType('owe')" id="dtype-owe"
+                            class="flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-red-200 bg-red-50 text-red-600 font-bold text-sm transition dtype-btn selected-owe">
+                            <i class="ph ph-arrow-up-right text-lg"></i> Saya Berhutang
+                        </button>
+                        <button type="button" onclick="selectDebtType('lend')" id="dtype-lend"
+                            class="flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-gray-100 text-brand-muted font-bold text-sm transition dtype-btn">
+                            <i class="ph ph-arrow-down-left text-lg"></i> Saya Piutang
+                        </button>
+                    </div>
+                    <input type="hidden" id="selectedDebtType" name="type" value="owe">
+                </div>
+
+                <!-- Name -->
+                <div class="relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                        <i class="ph ph-pencil-simple text-brand-dark"></i>
+                    </div>
+                    <input type="text" name="name" placeholder="Nama hutang (misal: KPR, Motor)" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+                </div>
+
+                <!-- Creditor -->
+                <div class="relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                        <i class="ph ph-user text-brand-dark"></i>
+                    </div>
+                    <input type="text" name="creditor" id="creditorInput" placeholder="Kepada siapa / Dari siapa" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+                </div>
+
+                <!-- Total Amount -->
+                <div class="relative">
+                    <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold">Rp</span>
+                    <input type="number" name="total_amount" placeholder="Total nominal" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-2xl font-bold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-300">
+                </div>
+
+                <!-- Due Date -->
+                <div class="relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                        <i class="ph ph-calendar text-brand-dark"></i>
+                    </div>
+                    <input type="date" name="due_date"
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+                    <p class="text-[10px] text-brand-muted mt-1 ml-1">Jatuh tempo (opsional)</p>
+                </div>
+
+                <!-- Note -->
+                <div class="relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                        <i class="ph ph-note text-brand-dark"></i>
+                    </div>
+                    <input type="text" name="note" placeholder="Catatan (opsional)"
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+                </div>
+
+                <button type="submit" id="btnSaveDebt" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-base transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph ph-floppy-disk text-xl"></i> Simpan Catatan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        function filterDebts(filter) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-brand-dark', 'shadow-sm');
+                btn.classList.add('text-brand-muted');
+            });
+            const active = document.getElementById('tab-' + filter);
+            if (active) {
+                active.classList.add('bg-white', 'text-brand-dark', 'shadow-sm');
+                active.classList.remove('text-brand-muted');
+            }
+            document.querySelectorAll('.debt-item').forEach(el => {
+                const t = el.getAttribute('data-type');
+                el.style.display = (filter === 'all' || t === filter) ? '' : 'none';
+            });
+        }
+
+        function selectDebtType(type) {
+            document.getElementById('selectedDebtType').value = type;
+            const oweBtn = document.getElementById('dtype-owe');
+            const lendBtn = document.getElementById('dtype-lend');
+            const creditorInput = document.getElementById('creditorInput');
+
+            if (type === 'owe') {
+                oweBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-red-400 bg-red-50 text-red-600 font-bold text-sm transition dtype-btn';
+                lendBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-gray-100 text-brand-muted font-bold text-sm transition dtype-btn';
+                creditorInput.placeholder = 'Kepada siapa (nama pemberi hutang)';
+            } else {
+                lendBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-brand-lime bg-brand-lime/10 text-brand-dark font-bold text-sm transition dtype-btn';
+                oweBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-gray-100 text-brand-muted font-bold text-sm transition dtype-btn';
+                creditorInput.placeholder = 'Dari siapa (nama peminjam)';
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('addBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('addBackdrop').classList.remove('opacity-0');
+                document.getElementById('addModal').classList.remove('translate-y-full');
+            }, 10);
+            selectDebtType('owe');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addBackdrop').classList.add('opacity-0');
+            document.getElementById('addModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('addBackdrop').classList.add('hidden'), 300);
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            msg.textContent = message;
+            if (type === 'success') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            } else {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        document.getElementById('addDebtForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveDebt');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i>';
+
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch('/api/debt', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    closeAddModal();
+                    showToast('Catatan berhasil disimpan!');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Gagal menyimpan', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph ph-floppy-disk text-xl"></i> Simpan Catatan';
+                }
+            } catch (err) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-floppy-disk text-xl"></i> Simpan Catatan';
+            }
+        });
+    </script>
+</body>
+</html>
