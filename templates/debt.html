@@ -298,6 +298,30 @@
                         class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
                 </div>
 
+                <!-- Integrasi Saldo -->
+                <div id="linkSaldoBox" class="bg-brand-lime/10 border border-brand-lime/30 rounded-2xl p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-brand-lime/30 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="ph ph-arrows-left-right text-brand-dark"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-brand-dark mb-0.5" id="linkSaldoTitle">Uang sudah diterima?</p>
+                            <p class="text-[11px] text-brand-muted mb-3" id="linkSaldoDesc">Jika ya, saldo utama akan bertambah otomatis sebagai pemasukan "Hutang Diterima".</p>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="setLinkSaldo('yes')" id="linkYes"
+                                    class="flex-1 py-2 rounded-xl text-xs font-bold border-2 border-brand-lime bg-brand-lime text-brand-dark transition">
+                                    Ya, catat di saldo
+                                </button>
+                                <button type="button" onclick="setLinkSaldo('no')" id="linkNo"
+                                    class="flex-1 py-2 rounded-xl text-xs font-bold border-2 border-gray-200 text-brand-muted transition">
+                                    Tidak perlu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="link_saldo" id="linkSaldoVal" value="yes">
+                </div>
+
                 <button type="submit" id="btnSaveDebt" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-base transition active:scale-95 flex items-center justify-center gap-2">
                     <i class="ph ph-floppy-disk text-xl"></i> Simpan Catatan
                 </button>
@@ -335,15 +359,34 @@
             const oweBtn = document.getElementById('dtype-owe');
             const lendBtn = document.getElementById('dtype-lend');
             const creditorInput = document.getElementById('creditorInput');
+            const linkTitle = document.getElementById('linkSaldoTitle');
+            const linkDesc = document.getElementById('linkSaldoDesc');
 
             if (type === 'owe') {
                 oweBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-red-400 bg-red-50 text-red-600 font-bold text-sm transition dtype-btn';
                 lendBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-gray-100 text-brand-muted font-bold text-sm transition dtype-btn';
                 creditorInput.placeholder = 'Kepada siapa (nama pemberi hutang)';
+                linkTitle.textContent = 'Uang sudah diterima?';
+                linkDesc.textContent = 'Jika ya, saldo utama akan bertambah otomatis sebagai pemasukan "Hutang Diterima".';
             } else {
                 lendBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-brand-lime bg-brand-lime/10 text-brand-dark font-bold text-sm transition dtype-btn';
                 oweBtn.className = 'flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-gray-100 text-brand-muted font-bold text-sm transition dtype-btn';
                 creditorInput.placeholder = 'Dari siapa (nama peminjam)';
+                linkTitle.textContent = 'Uang sudah diberikan?';
+                linkDesc.textContent = 'Jika ya, saldo utama akan berkurang otomatis sebagai pengeluaran "Piutang Diberikan".';
+            }
+        }
+
+        function setLinkSaldo(val) {
+            document.getElementById('linkSaldoVal').value = val;
+            const yesBtn = document.getElementById('linkYes');
+            const noBtn = document.getElementById('linkNo');
+            if (val === 'yes') {
+                yesBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold border-2 border-brand-lime bg-brand-lime text-brand-dark transition';
+                noBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold border-2 border-gray-200 text-brand-muted transition';
+            } else {
+                noBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold border-2 border-brand-dark bg-brand-dark text-white transition';
+                yesBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold border-2 border-gray-200 text-brand-muted transition';
             }
         }
 

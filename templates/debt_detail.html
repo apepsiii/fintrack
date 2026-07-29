@@ -109,6 +109,9 @@
                     <i class="ph ph-money text-lg"></i>
                     {{ if eq .Debt.Type "owe" }}Catat Pembayaran{{ else }}Catat Penerimaan{{ end }}
                 </button>
+                <button onclick="sendWAReminder()" class="w-12 h-12 bg-green-50 hover:bg-green-100 text-green-600 rounded-2xl flex items-center justify-center transition active:scale-95" title="Kirim reminder WhatsApp">
+                    <i class="ph ph-whatsapp-logo text-xl"></i>
+                </button>
                 <button onclick="confirmDelete()" class="w-12 h-12 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl flex items-center justify-center transition active:scale-95">
                     <i class="ph ph-trash text-xl"></i>
                 </button>
@@ -249,6 +252,47 @@
 
     <script>
         const DEBT_ID = {{ .Debt.ID }};
+        const DEBT_NAME = {{ printf "%q" .Debt.Name }};
+        const DEBT_TYPE = {{ printf "%q" .Debt.Type }};
+        const CREDITOR = {{ printf "%q" .Debt.Creditor }};
+        const REMAIN = {{ printf "%q" .Debt.FormattedRemain }};
+        const DUE_DATE = {{ printf "%q" .Debt.FormattedDueDate }};
+
+        function sendWAReminder() {
+            let msg = '';
+            if (DEBT_TYPE === 'lend') {
+                msg = `Halo ${CREDITOR}, saya ingin mengingatkan dengan sopan bahwa terdapat piutang atas nama *${DEBT_NAME}* senilai *Rp ${REMAIN}* yang belum dikembalikan.`;
+                if (DUE_DATE) msg += ` Jatuh tempo pada *${DUE_DATE}*.`;
+                msg += `\n\nMohon konfirmasi ketersediaan Anda untuk menyelesaikan pembayaran tersebut. Terima kasih atas perhatian dan kerjasamanya. 🙏`;
+            } else {
+                msg = `Halo ${CREDITOR}, saya ingin mengonfirmasi bahwa saya sedang dalam proses penyelesaian pembayaran hutang *${DEBT_NAME}* senilai *Rp ${REMAIN}*.`;
+                if (DUE_DATE) msg += ` Batas waktu pembayaran pada *${DUE_DATE}*.`;
+                msg += `\n\nTerima kasih atas kesabaran dan kepercayaan Anda. 🙏`;
+            }
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
+        function sendWAPaymentNotif(debtName, creditor, debtType, amountFormatted, isSettled) {
+            let msg = '';
+            if (debtType === 'owe') {
+                msg = `Halo ${creditor}, saya ingin menginformasikan bahwa saya telah melakukan pembayaran hutang *${debtName}* sebesar *Rp ${amountFormatted}*.`;
+                if (isSettled) {
+                    msg += `\n\n✅ Hutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas kepercayaan dan kesabaran Anda. 🙏`;
+                } else {
+                    msg += `\n\nSisa hutang masih *Rp ${REMAIN}*. Saya akan segera melunasi sisanya. Terima kasih. 🙏`;
+                }
+            } else {
+                msg = `Halo ${creditor}, terima kasih atas pembayaran *${debtName}* sebesar *Rp ${amountFormatted}* yang telah diterima.`;
+                if (isSettled) {
+                    msg += `\n\n✅ Piutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas itikad baik Anda. 🙏`;
+                } else {
+                    msg += `\n\nSisa piutang masih *Rp ${REMAIN}*. Terima kasih. 🙏`;
+                }
+            }
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -328,7 +372,14 @@
                 if (res.ok) {
                     closePayModal();
                     showToast(data.message || 'Pembayaran berhasil dicatat');
-                    setTimeout(() => window.location.reload(), 800);
+
+                    const amountFormatted = Number(data.amount).toLocaleString('id-ID');
+                    setTimeout(() => {
+                        if (confirm('Kirim notifikasi WhatsApp ke ' + data.creditor + '?')) {
+                            sendWAPaymentNotif(data.debt_name, data.creditor, data.debt_type, amountFormatted, data.is_settled);
+                        }
+                        setTimeout(() => window.location.reload(), 300);
+                    }, 600);
                 } else {
                     showToast(data.error || 'Terjadi kesalahan', 'error');
                     btn.disabled = false;

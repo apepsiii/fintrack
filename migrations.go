@@ -204,6 +204,13 @@ func RunMigrations(db *sql.DB) error {
 				);
 			`,
 		},
+		{
+			version: 10,
+			name:    "debt_saldo_integration",
+			sql: `
+				ALTER TABLE debts ADD COLUMN linked_transaction_id INTEGER;
+			`,
+		},
 	}
 
 	// Get current migration version
