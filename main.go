@@ -503,11 +503,9 @@ func main() {
 		if amount != "" && categoryID != "" {
 			var parsedDate time.Time
 			if dateStr != "" {
-				parsedDate, err = time.Parse("2006-01-02T15:04", dateStr)
+				parsedDate, err = time.ParseInLocation("2006-01-02T15:04", dateStr, wib)
 				if err != nil {
 					parsedDate = nowWIB()
-				} else {
-					parsedDate = parsedDate.In(wib)
 				}
 			} else {
 				parsedDate = nowWIB()
