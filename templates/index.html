@@ -256,10 +256,16 @@
                 <i class="ph ph-tag text-brand-dark"></i>
             </div>
             <select name="category_id" id="categorySelect" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-10 py-4 focus:outline-none focus:border-brand-lime appearance-none text-sm">
-                <option value="1">🍔 Makan & Minum</option>
-                <option value="2">🚗 Transportasi</option>
-                <option value="3">⚡ Tagihan & Utilitas</option>
-                <option value="4">💰 Gaji & Pendapatan</option>
+                <optgroup label="Pengeluaran">
+                {{ range .Categories }}{{ if eq .Type "expense" }}
+                <option value="{{ .ID }}">{{ .Name }}</option>
+                {{ end }}{{ end }}
+                </optgroup>
+                <optgroup label="Pemasukan">
+                {{ range .Categories }}{{ if eq .Type "income" }}
+                <option value="{{ .ID }}">{{ .Name }}</option>
+                {{ end }}{{ end }}
+                </optgroup>
             </select>
             <i class="ph ph-caret-down absolute right-5 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none"></i>
         </div>

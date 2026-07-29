@@ -440,6 +440,22 @@ func main() {
 			},
 			"TopSavings": topSavings,
 			"TopBudgets": topBudgets,
+			"Categories": func() []Category {
+				rows, err := db.Query(`
+					SELECT id, name, type, icon FROM categories
+					WHERE user_id IS NULL OR user_id = ?
+					ORDER BY type DESC, name ASC
+				`, userID)
+				var cats []Category
+				if err != nil { return cats }
+				defer rows.Close()
+				for rows.Next() {
+					var cat Category
+					rows.Scan(&cat.ID, &cat.Name, &cat.Type, &cat.Icon)
+					cats = append(cats, cat)
+				}
+				return cats
+			}(),
 		})
 	})
 
