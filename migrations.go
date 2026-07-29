@@ -139,6 +139,40 @@ func RunMigrations(db *sql.DB) error {
 				ALTER TABLE users ADD COLUMN avatar TEXT;
 			`,
 		},
+		{
+			version: 8,
+			name:    "custom_categories_and_recurring",
+			sql: `
+				ALTER TABLE categories ADD COLUMN user_id INTEGER DEFAULT NULL;
+				ALTER TABLE categories ADD COLUMN is_default INTEGER DEFAULT 1;
+
+				CREATE TABLE IF NOT EXISTS recurring_transactions (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					user_id INTEGER NOT NULL,
+					name TEXT NOT NULL,
+					type TEXT NOT NULL,
+					amount INTEGER NOT NULL,
+					category_id INTEGER NOT NULL,
+					note TEXT,
+					frequency TEXT NOT NULL DEFAULT 'monthly',
+					next_date TEXT NOT NULL,
+					is_active INTEGER NOT NULL DEFAULT 1,
+					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					FOREIGN KEY(user_id) REFERENCES users(id),
+					FOREIGN KEY(category_id) REFERENCES categories(id)
+				);
+
+				CREATE TABLE IF NOT EXISTS password_resets (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					user_id INTEGER NOT NULL,
+					token TEXT NOT NULL UNIQUE,
+					expires_at DATETIME NOT NULL,
+					used INTEGER NOT NULL DEFAULT 0,
+					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					FOREIGN KEY(user_id) REFERENCES users(id)
+				);
+			`,
+		},
 	}
 
 	// Get current migration version

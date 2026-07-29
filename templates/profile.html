@@ -43,7 +43,12 @@
             <div class="bg-brand-dark rounded-3xl p-5 flex items-center gap-4 relative overflow-hidden shadow-lg">
                 <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
                 
-                <img src="https://ui-avatars.com/api/?name=ST+Racson&background=c3f545&color=01381b&rounded=true&bold=true" alt="Profile" class="w-16 h-16 rounded-full border-2 border-brand-lime relative z-10">
+                <div class="relative">
+                    <img id="profileAvatarImg" src="{{ .User.Avatar }}" alt="Profile" class="w-16 h-16 rounded-full border-2 border-brand-lime relative z-10 object-cover">
+                    <button onclick="openAvatarModal()" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-brand-lime flex items-center justify-center text-brand-dark border-2 border-brand-dark z-10 transition hover:scale-110">
+                        <i class="ph ph-camera text-[10px]"></i>
+                    </button>
+                </div>
                 <div class="relative z-10">
                     <h2 class="text-lg font-bold text-white">{{ .User.Name }}</h2>
                     <p class="text-sm text-white/60 font-medium">{{ .User.Email }}</p>
@@ -51,7 +56,7 @@
                         {{ .User.JoinDate }}
                     </div>
                 </div>
-                <button class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition z-10">
+                <button onclick="openEditProfile()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition z-10">
                     <i class="ph ph-pencil-simple text-sm"></i>
                 </button>
             </div>
@@ -68,6 +73,13 @@
                     </div>
                     <i class="ph ph-caret-right text-brand-muted"></i>
                 </button>
+                <a href="/forgot-password" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-lock-key text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Reset Password</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </a>
                 <button class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-bell text-lg"></i></div>
@@ -75,6 +87,40 @@
                     </div>
                     <i class="ph ph-caret-right text-brand-muted"></i>
                 </button>
+            </div>
+
+            <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Fitur</h3>
+            <div class="bg-gray-50 rounded-2xl p-2 mb-6 border border-gray-100">
+                <a href="/ai" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600"><i class="ph ph-robot text-lg"></i></div>
+                        <div>
+                            <span class="text-sm font-semibold text-brand-dark block">FinBot AI</span>
+                            <span class="text-[10px] text-brand-muted">Asisten keuangan AI</span>
+                        </div>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </a>
+                <a href="/recurring" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600"><i class="ph ph-repeat text-lg"></i></div>
+                        <div>
+                            <span class="text-sm font-semibold text-brand-dark block">Transaksi Berulang</span>
+                            <span class="text-[10px] text-brand-muted">Otomasi tagihan rutin</span>
+                        </div>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </a>
+                <a href="/categories" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500"><i class="ph ph-tag text-lg"></i></div>
+                        <div>
+                            <span class="text-sm font-semibold text-brand-dark block">Kelola Kategori</span>
+                            <span class="text-[10px] text-brand-muted">Tambah kategori custom</span>
+                        </div>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </a>
             </div>
 
             <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Aplikasi</h3>
@@ -178,6 +224,38 @@
                     <i class="ph ph-check text-lg"></i> Simpan Perubahan
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- Avatar Modal -->
+    <div id="avatarBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeAvatarModal()"></div>
+    <div id="avatarModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[92vh]">
+        <div class="p-6 pb-8">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <h2 class="text-xl font-bold text-brand-dark mb-1 text-center">Pilih Avatar</h2>
+            <p class="text-xs text-brand-muted text-center mb-5">Pilih dari preset atau upload foto sendiri</p>
+
+            <div id="avatarPresets" class="grid grid-cols-4 gap-3 mb-5">
+            </div>
+
+            <div class="border-t border-gray-100 pt-5">
+                <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Upload Foto</p>
+                <label class="flex items-center gap-3 p-3.5 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl hover:border-brand-lime transition cursor-pointer active:scale-95">
+                    <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0">
+                        <i class="ph ph-image text-lg text-brand-dark"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-brand-dark">Pilih dari galeri</p>
+                        <p class="text-[10px] text-brand-muted">JPG, PNG max 2MB</p>
+                    </div>
+                    <i class="ph ph-upload-simple text-brand-muted text-lg"></i>
+                    <input type="file" id="avatarUpload" accept="image/*" class="hidden" onchange="handleAvatarUpload(this)">
+                </label>
+            </div>
+
+            <button onclick="closeAvatarModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-brand-dark py-3.5 rounded-2xl font-bold text-sm transition mt-4">
+                Tutup
+            </button>
         </div>
     </div>
 
@@ -312,6 +390,64 @@
     </div>
 
     <script>
+        const AVATAR_COLORS = ['c3f545', '01381b', '3b82f6', '8b5cf6', 'ec4899', 'f59e0b', '10b981', '6366f1'];
+
+        function openAvatarModal() {
+            const grid = document.getElementById('avatarPresets');
+            const userName = '{{ .User.Name }}';
+            grid.innerHTML = AVATAR_COLORS.map((c, i) =>
+                `<button onclick="pickAvatarPreset(${i})" class="aspect-square rounded-2xl overflow-hidden border-2 border-gray-100 hover:border-brand-lime transition active:scale-95">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=${c}&color=ffffff&rounded=true&bold=true&size=200" class="w-full h-full object-cover" loading="lazy">
+                </button>`
+            ).join('');
+
+            document.getElementById('avatarBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('avatarBackdrop').classList.remove('opacity-0');
+                document.getElementById('avatarModal').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeAvatarModal() {
+            document.getElementById('avatarBackdrop').classList.add('opacity-0');
+            document.getElementById('avatarModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('avatarBackdrop').classList.add('hidden'), 300);
+        }
+
+        async function pickAvatarPreset(index) {
+            try {
+                const res = await fetch('/api/avatar/preset', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({index})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('profileAvatarImg').src = data.avatar;
+                    showToast('Avatar berhasil diperbarui');
+                    closeAvatarModal();
+                }
+            } catch(e) { showToast('Gagal memperbarui avatar', 'error'); }
+        }
+
+        async function handleAvatarUpload(input) {
+            if (!input.files || !input.files[0]) return;
+            const formData = new FormData();
+            formData.append('avatar', input.files[0]);
+            try {
+                const res = await fetch('/api/avatar/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('profileAvatarImg').src = data.avatar + '?t=' + Date.now();
+                    showToast('Foto berhasil diupload');
+                    closeAvatarModal();
+                } else {
+                    showToast(data.error || 'Upload gagal', 'error');
+                }
+            } catch(e) { showToast('Gagal upload foto', 'error'); }
+            input.value = '';
+        }
+
         // Dark mode toggle
         function initDarkMode() {
             const darkMode = localStorage.getItem('darkMode') === 'true';

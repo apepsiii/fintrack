@@ -3,27 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Monitor anggaran bulanan FinTrack">
     <meta name="theme-color" content="#c3f545">
-    <title>Target Anggaran - FinTrack</title>
-    
-    <!-- PWA Manifest -->
+    <title>Anggaran - FinTrack</title>
     <link rel="manifest" href="/static/manifest.json">
-    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        brand: { lime: '#c3f545', limeDark: '#a3d124', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
-                    }
+                    colors: { brand: { lime: '#c3f545', limeDark: '#a3d124', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' } }
                 }
             }
         }
@@ -31,101 +22,346 @@
     <style>
         body { background-color: #f1f5f9; }
         ::-webkit-scrollbar { display: none; }
-        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195,245,69,.2); }
     </style>
 </head>
-<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
-    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
-        
-        <header class="pt-8 px-6 flex justify-between items-center mb-6">
-            <h1 class="text-xl font-bold text-brand-dark tracking-tight">Anggaran Bulanan</h1>
-            <button class="w-10 h-10 rounded-full bg-brand-lime/20 flex items-center justify-center transition active:scale-95 text-brand-dark">
-                <i class="ph ph-plus text-xl font-bold"></i>
+<body class="flex justify-center min-h-screen sm:py-8">
+<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+    <!-- Header -->
+    <header class="pt-8 px-6 mb-4 shrink-0">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-3">
+                <a href="/" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <i class="ph ph-arrow-left text-xl text-brand-dark"></i>
+                </a>
+                <h1 class="text-xl font-bold text-brand-dark tracking-tight">Anggaran</h1>
+            </div>
+        </div>
+
+        <!-- Month Navigation -->
+        <div class="flex items-center justify-between bg-gray-50 rounded-2xl px-2 py-1.5 border border-gray-100">
+            <a href="/targets?month={{ .PrevMonth }}" class="w-9 h-8 flex items-center justify-center rounded-xl text-brand-dark hover:bg-white transition active:scale-95">
+                <i class="ph ph-caret-left text-lg"></i>
+            </a>
+            <span class="text-sm font-bold text-brand-dark">{{ .MonthLabel }}</span>
+            <a href="/targets?month={{ .NextMonth }}" class="w-9 h-8 flex items-center justify-center rounded-xl text-brand-dark hover:bg-white transition active:scale-95">
+                <i class="ph ph-caret-right text-lg"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Summary Card -->
+    <section class="px-6 mb-4 shrink-0">
+        {{ if gt .TotalLimitRaw 0 }}
+        <div class="bg-brand-dark rounded-3xl p-5 relative overflow-hidden shadow-lg">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+            <p class="text-xs text-brand-lime mb-2 font-bold uppercase tracking-wider relative z-10">Ringkasan {{ .MonthLabel }}</p>
+            <div class="relative z-10">
+                <div class="flex justify-between items-end mb-3">
+                    <div>
+                        <p class="text-[10px] text-white/50">Pengeluaran</p>
+                        <p class="text-2xl font-extrabold text-white">Rp {{ .TotalSpent }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-white/50">Total Anggaran</p>
+                        <p class="text-2xl font-extrabold text-white">Rp {{ .TotalLimit }}</p>
+                    </div>
+                </div>
+                <div class="w-full bg-white/10 rounded-full h-2 mb-1.5">
+                    {{ if gt .TotalPct 80 }}
+                    <div class="h-2 rounded-full bg-red-400 transition-all duration-700" style="width: {{ .TotalPct }}%"></div>
+                    {{ else if gt .TotalPct 50 }}
+                    <div class="h-2 rounded-full bg-yellow-400 transition-all duration-700" style="width: {{ .TotalPct }}%"></div>
+                    {{ else }}
+                    <div class="h-2 rounded-full bg-brand-lime transition-all duration-700" style="width: {{ .TotalPct }}%"></div>
+                    {{ end }}
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-[10px] text-white/50">{{ .TotalPct }}% terpakai</span>
+                    <span class="text-[10px] text-brand-lime font-semibold">Sisa Rp {{ .TotalRemaining }}</span>
+                </div>
+            </div>
+        </div>
+        {{ else }}
+        <div class="bg-brand-lime/10 border border-brand-lime/30 rounded-2xl p-4 flex items-center gap-3">
+            <i class="ph ph-info text-brand-dark text-xl shrink-0"></i>
+            <p class="text-sm text-brand-dark font-medium">Belum ada anggaran bulan ini. Tekan <strong>+</strong> untuk menambahkan.</p>
+        </div>
+        {{ end }}
+    </section>
+
+    <!-- Budget List -->
+    <section class="px-6 pb-28 flex-1 overflow-y-auto">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider">Per Kategori</h3>
+            <button onclick="openAddModal()" class="flex items-center gap-1.5 text-xs font-bold text-brand-dark bg-brand-lime/20 hover:bg-brand-lime/40 px-3 py-1.5 rounded-xl transition">
+                <i class="ph ph-plus text-sm"></i> Tambah
             </button>
-        </header>
+        </div>
 
-        <section class="px-6 mb-8">
-            <div class="bg-brand-dark p-6 rounded-3xl relative overflow-hidden shadow-lg">
-                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
-                <div class="relative z-10">
-                    <p class="text-sm font-medium text-white/70 mb-1">Total Pengeluaran vs Anggaran</p>
-                    <div class="flex items-end gap-2 mb-4">
-                        <h2 class="text-3xl font-extrabold text-white tracking-tight">Rp {{ .TotalSpent }}</h2>
-                        <p class="text-sm text-white/50 font-medium pb-1">/ Rp {{ .TotalLimit }}</p>
-                    </div>
-                    
-                    <div class="w-full bg-white/10 rounded-full h-1.5 mb-2">
-                        <div class="bg-brand-lime h-1.5 rounded-full" style="width: 45%;"></div> 
-                    </div>
-                    <p class="text-[11px] text-brand-lime">Kondisi keuangan aman bulan ini.</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="px-6 pb-28 flex-1 overflow-y-auto">
-            <div class="flex justify-between items-center mb-5">
-                <h3 class="text-base font-bold text-brand-dark">Rincian Anggaran</h3>
-            </div>
-            
-            <div class="flex flex-col gap-6">
-                {{ range .Budgets }}
-                <div>
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
-                                <i class="ph {{ .Icon }} text-lg text-brand-dark"></i>
-                            </div>
-                            <div>
-                                <span class="text-sm font-bold text-brand-dark block">{{ .CategoryName }}</span>
-                                <span class="text-[11px] text-brand-muted font-medium">Sisa: Rp {{ .FormattedSisa }}</span>
-                            </div>
+        <div class="flex flex-col gap-3">
+            {{ range .Budgets }}
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                <div class="flex items-center justify-between mb-{{ if .Limit }}3{{ else }}0{{ end }}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl {{ if .Limit }}{{ if gt .Percentage 80 }}bg-red-50{{ else }}bg-white{{ end }}{{ else }}bg-gray-100{{ end }} border border-gray-100 flex items-center justify-center">
+                            <i class="ph {{ .Icon }} text-lg {{ if .Limit }}{{ if gt .Percentage 80 }}text-red-400{{ else }}text-brand-dark{{ end }}{{ else }}text-brand-muted{{ end }}"></i>
                         </div>
-                        <div class="text-right">
-                            <p class="text-sm font-bold text-brand-dark">Rp {{ .FormattedSpent }}</p>
-                            <p class="text-[10px] text-brand-muted font-medium">dari Rp {{ .FormattedLimit }}</p>
+                        <div>
+                            <p class="text-sm font-bold text-brand-dark">{{ .CategoryName }}</p>
+                            {{ if .Limit }}
+                            <p class="text-[10px] font-semibold {{ if gt .Percentage 100 }}text-red-500{{ else if gt .Percentage 80 }}text-yellow-500{{ else }}text-brand-muted{{ end }}">
+                                {{ .StatusText }} · {{ .Percentage }}%
+                            </p>
+                            {{ else }}
+                            <p class="text-[10px] text-brand-muted">Belum ada anggaran</p>
+                            {{ end }}
                         </div>
                     </div>
-                    
-                    <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                        <div class="{{ .StatusColor }} h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: {{ .Percentage }}%;"></div>
+                    <div class="flex items-center gap-2">
+                        {{ if .Limit }}
+                        <div class="text-right mr-1">
+                            <p class="text-sm font-bold {{ if gt .Percentage 100 }}text-red-500{{ else }}text-brand-dark{{ end }}">Rp {{ .FormattedSpent }}</p>
+                            <p class="text-[10px] text-brand-muted">/ Rp {{ .FormattedLimit }}</p>
+                        </div>
+                        <button onclick="openEditModal({{ .CategoryID }}, '{{ .CategoryName }}', {{ .Limit }})"
+                            class="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-brand-lime/20 transition active:scale-95">
+                            <i class="ph ph-pencil-simple text-sm text-brand-dark"></i>
+                        </button>
+                        <button onclick="deleteBudget({{ .CategoryID }})"
+                            class="w-8 h-8 rounded-xl bg-white border border-red-100 flex items-center justify-center hover:bg-red-50 transition active:scale-95">
+                            <i class="ph ph-trash text-sm text-red-400"></i>
+                        </button>
+                        {{ else }}
+                        <button onclick="openEditModal({{ .CategoryID }}, '{{ .CategoryName }}', 0)"
+                            class="text-xs font-bold text-brand-dark bg-brand-lime px-3 py-2 rounded-xl hover:bg-brand-limeDark transition active:scale-95">
+                            + Atur
+                        </button>
+                        {{ end }}
                     </div>
                 </div>
-                {{ else }}
-                <div class="text-center py-6">
-                    <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="ph ph-target text-2xl text-brand-muted"></i>
-                    </div>
-                    <p class="text-brand-dark/70 text-sm font-medium">Belum ada anggaran yang diatur.</p>
+
+                {{ if .Limit }}
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-700 {{ .StatusColor }}"
+                         style="width: {{ if gt .Percentage 100 }}100{{ else }}{{ .Percentage }}{{ end }}%"></div>
+                </div>
+                <div class="flex justify-between mt-1.5">
+                    <span class="text-[10px] text-brand-muted">
+                        {{ if gt .Percentage 100 }}
+                        <span class="text-red-500 font-semibold">Rp {{ .FormattedSisa }} over budget</span>
+                        {{ else }}
+                        Sisa Rp {{ .FormattedSisa }}
+                        {{ end }}
+                    </span>
+                    <span class="text-[10px] text-brand-muted">{{ .FormattedSpent }} terpakai</span>
                 </div>
                 {{ end }}
             </div>
-        </section>
+            {{ end }}
+        </div>
+    </section>
 
-        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
-            <div class="flex justify-between items-center relative">
-                <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
-                    <i class="ph ph-house text-2xl"></i>
-                    <span class="text-[9px] font-medium opacity-80">Beranda</span>
-                </a>
-                <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
-                    <i class="ph ph-chart-bar text-2xl"></i>
-                    <span class="text-[9px] font-medium">Statistik</span>
-                </a>
-                <div class="relative -top-6 flex justify-center w-14">
-                    <button class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
-                        <i class="ph ph-plus text-2xl font-bold"></i>
-                    </button>
-                </div>
-                <a href="/savings" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
-                    <i class="ph ph-piggy-bank text-2xl"></i>
-                    <span class="text-[9px] font-medium">Tabungan</span>
-                </a>
-                <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
-                    <i class="ph ph-user text-2xl"></i>
-                    <span class="text-[9px] font-medium">Profil</span>
+    <!-- Bottom Nav -->
+    <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pt-2 px-6 pb-6 mt-auto z-50">
+        <div class="flex justify-between items-center relative">
+            <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                <i class="ph ph-house text-2xl"></i>
+                <span class="text-[9px] font-medium">Beranda</span>
+            </a>
+            <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                <i class="ph ph-chart-bar text-2xl"></i>
+                <span class="text-[9px] font-medium">Statistik</span>
+            </a>
+            <div class="relative -top-6 flex justify-center w-14">
+                <a href="/" class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                    <i class="ph ph-plus text-2xl font-bold"></i>
                 </a>
             </div>
-        </nav>
-    </main>
+            <a href="/targets" class="flex flex-col items-center gap-1.5 w-10 text-white">
+                <i class="ph-fill ph-target text-2xl"></i>
+                <span class="text-[9px] font-medium">Anggaran</span>
+            </a>
+            <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                <i class="ph ph-user text-2xl"></i>
+                <span class="text-[9px] font-medium">Profil</span>
+            </a>
+        </div>
+    </nav>
+</main>
+
+<!-- Add Modal (pilih kategori) -->
+<div id="addBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeAddModal()"></div>
+<div id="addModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[85vh]">
+    <div class="p-6 pb-8">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-4 text-center">Pilih Kategori</h2>
+        <div class="flex flex-col gap-2">
+            {{ range .Budgets }}
+            {{ if not .Limit }}
+            <button onclick="openEditModal({{ .CategoryID }}, '{{ .CategoryName }}', 0); closeAddModal()"
+                class="flex items-center gap-3 p-3.5 bg-gray-50 rounded-2xl hover:bg-brand-lime/10 transition active:scale-95 border border-gray-100">
+                <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shrink-0">
+                    <i class="ph {{ .Icon }} text-lg text-brand-dark"></i>
+                </div>
+                <span class="text-sm font-bold text-brand-dark">{{ .CategoryName }}</span>
+                <i class="ph ph-caret-right text-brand-muted ml-auto"></i>
+            </button>
+            {{ end }}
+            {{ end }}
+        </div>
+        <p class="text-xs text-brand-muted text-center mt-4">Semua kategori sudah punya anggaran? Edit langsung dari daftar di atas.</p>
+    </div>
+</div>
+
+<!-- Edit/Set Budget Modal -->
+<div id="editBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeEditModal()"></div>
+<div id="editModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+    <div class="p-6 pb-8">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-1 text-center" id="editModalTitle">Atur Anggaran</h2>
+        <p class="text-xs text-brand-muted text-center mb-5" id="editModalCategory"></p>
+
+        <form id="editForm" class="flex flex-col gap-4">
+            <input type="hidden" name="category_id" id="editCategoryID">
+            <input type="hidden" name="month_year" value="{{ .MonthYear }}">
+
+            <div>
+                <label class="block text-xs font-bold text-brand-dark mb-1.5 uppercase tracking-wide">Batas Anggaran</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-muted font-bold">Rp</span>
+                    <input type="number" name="amount_limit" id="editAmount" placeholder="0" required min="1000"
+                        class="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-2xl font-bold text-brand-dark focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition">
+                </div>
+            </div>
+
+            <!-- Quick presets -->
+            <div>
+                <p class="text-[10px] text-brand-muted font-semibold mb-2">Preset cepat:</p>
+                <div class="flex gap-2 flex-wrap">
+                    <button type="button" onclick="setAmount(100000)" class="text-xs bg-gray-100 hover:bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-xl font-semibold transition">100rb</button>
+                    <button type="button" onclick="setAmount(250000)" class="text-xs bg-gray-100 hover:bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-xl font-semibold transition">250rb</button>
+                    <button type="button" onclick="setAmount(500000)" class="text-xs bg-gray-100 hover:bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-xl font-semibold transition">500rb</button>
+                    <button type="button" onclick="setAmount(1000000)" class="text-xs bg-gray-100 hover:bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-xl font-semibold transition">1jt</button>
+                    <button type="button" onclick="setAmount(2000000)" class="text-xs bg-gray-100 hover:bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-xl font-semibold transition">2jt</button>
+                    <button type="button" onclick="setAmount(5000000)" class="text-xs bg-gray-100 hover:bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-xl font-semibold transition">5jt</button>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeEditModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-brand-dark py-4 rounded-2xl font-bold text-sm transition">Batal</button>
+                <button type="submit" id="editSubmitBtn" class="flex-1 bg-brand-dark hover:bg-[#024a24] text-white py-4 rounded-2xl font-bold text-sm transition active:scale-95">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+    <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+        <i id="toastIcon" class="text-xl"></i>
+        <span id="toastMessage"></span>
+    </div>
+</div>
+
+<script>
+    const MONTH_YEAR = '{{ .MonthYear }}';
+
+    function openAddModal() {
+        document.getElementById('addBackdrop').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('addBackdrop').classList.remove('opacity-0');
+            document.getElementById('addModal').classList.remove('translate-y-full');
+        }, 10);
+    }
+    function closeAddModal() {
+        document.getElementById('addBackdrop').classList.add('opacity-0');
+        document.getElementById('addModal').classList.add('translate-y-full');
+        setTimeout(() => document.getElementById('addBackdrop').classList.add('hidden'), 300);
+    }
+
+    function openEditModal(categoryID, categoryName, currentLimit) {
+        document.getElementById('editCategoryID').value = categoryID;
+        document.getElementById('editModalCategory').textContent = categoryName;
+        document.getElementById('editModalTitle').textContent = currentLimit > 0 ? 'Edit Anggaran' : 'Atur Anggaran';
+        document.getElementById('editAmount').value = currentLimit > 0 ? currentLimit : '';
+        document.getElementById('editBackdrop').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('editBackdrop').classList.remove('opacity-0');
+            document.getElementById('editModal').classList.remove('translate-y-full');
+            document.getElementById('editAmount').focus();
+        }, 10);
+    }
+    function closeEditModal() {
+        document.getElementById('editBackdrop').classList.add('opacity-0');
+        document.getElementById('editModal').classList.add('translate-y-full');
+        setTimeout(() => document.getElementById('editBackdrop').classList.add('hidden'), 300);
+    }
+
+    function setAmount(val) {
+        document.getElementById('editAmount').value = val;
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('editSubmitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Menyimpan...';
+
+        const fd = new FormData(e.target);
+        try {
+            const res = await fetch('/api/budget', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (res.ok) {
+                closeEditModal();
+                showToast('Anggaran berhasil disimpan');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showToast(data.error || 'Gagal menyimpan', 'error');
+            }
+        } catch(e) {
+            showToast('Terjadi kesalahan', 'error');
+        }
+        btn.disabled = false;
+        btn.textContent = 'Simpan';
+    });
+
+    async function deleteBudget(categoryID) {
+        if (!confirm('Hapus anggaran untuk kategori ini?')) return;
+        try {
+            const res = await fetch(`/api/budget?category_id=${categoryID}&month_year=${MONTH_YEAR}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('Anggaran dihapus');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showToast(data.error || 'Gagal menghapus', 'error');
+            }
+        } catch(e) {
+            showToast('Terjadi kesalahan', 'error');
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const content = document.getElementById('toastContent');
+        const icon = document.getElementById('toastIcon');
+        document.getElementById('toastMessage').textContent = message;
+        if (type === 'success') {
+            content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+            icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+        } else {
+            content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+            icon.className = 'ph ph-x-circle text-white text-xl';
+        }
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'), 10);
+        setTimeout(() => {
+            toast.classList.add('translate-y-[-20px]', 'opacity-0');
+            setTimeout(() => toast.classList.add('hidden'), 300);
+        }, 3000);
+    }
+</script>
 </body>
 </html>

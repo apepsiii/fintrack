@@ -57,6 +57,23 @@ type BudgetStat struct {
 	StatusColor     string
 }
 
+type BudgetDisplay struct {
+	ID             int
+	CategoryID     int
+	CategoryName   string
+	Icon           string
+	Limit          int
+	Spent          int
+	Remaining      int
+	Percentage     int
+	StatusColor    string
+	StatusText     string
+	FormattedLimit string
+	FormattedSpent string
+	FormattedSisa  string
+	MonthYear      string
+}
+
 var db *sql.DB
 
 func initDB() {
@@ -149,6 +166,22 @@ func seedCategories() {
 
 	db.Exec("INSERT OR IGNORE INTO budgets (category_id, amount_limit) VALUES (1, 1500000)")
 	db.Exec("INSERT OR IGNORE INTO budgets (category_id, amount_limit) VALUES (2, 500000)")
+}
+
+func prevMonthStr(monthYear string) string {
+	t, _ := time.Parse("2006-01", monthYear)
+	return t.AddDate(0, -1, 0).Format("2006-01")
+}
+
+func nextMonthStr(monthYear string) string {
+	t, _ := time.Parse("2006-01", monthYear)
+	return t.AddDate(0, 1, 0).Format("2006-01")
+}
+
+func formatMonthLabel(monthYear string) string {
+	t, _ := time.Parse("2006-01", monthYear)
+	months := []string{"", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"}
+	return months[t.Month()] + " " + strconv.Itoa(t.Year())
 }
 
 func main() {
@@ -286,6 +319,8 @@ func main() {
 		c.Redirect(http.StatusFound, "/login")
 	})
 
+	RegisterForgotPasswordRoutes(router)
+
 	// Protected routes (require authentication)
 	protected := router.Group("/")
 	protected.Use(AuthMiddleware())
@@ -352,12 +387,58 @@ func main() {
 			}
 		}
 
+		// Top budget categories for dashboard widget
+		now := time.Now()
+		monthYear := now.Format("2006-01")
+		budgetRows, _ := db.Query(`
+			SELECT c.name, c.icon,
+				   COALESCE(b.amount_limit, 0),
+				   COALESCE((SELECT SUM(amount) FROM transactions
+				             WHERE category_id = c.id AND user_id = ?
+				             AND type = 'expense' AND substr(date,1,7) = ?), 0) as spent
+			FROM categories c
+			LEFT JOIN budgets b ON b.category_id = c.id AND b.user_id = ? AND b.month_year = ?
+			WHERE c.type = 'expense' AND b.amount_limit > 0
+			ORDER BY spent DESC LIMIT 3
+		`, userID, monthYear, userID, monthYear)
+
+		type BudgetWidget struct {
+			Name       string
+			Icon       string
+			Limit      int
+			Spent      int
+			Percentage int
+			StatusColor string
+			FormattedSpent string
+			FormattedLimit string
+		}
+		var topBudgets []BudgetWidget
+		if budgetRows != nil {
+			defer budgetRows.Close()
+			for budgetRows.Next() {
+				var b BudgetWidget
+				budgetRows.Scan(&b.Name, &b.Icon, &b.Limit, &b.Spent)
+				if b.Limit > 0 {
+					b.Percentage = b.Spent * 100 / b.Limit
+					if b.Percentage > 100 { b.Percentage = 100 }
+				}
+				if b.Percentage >= 100 { b.StatusColor = "bg-red-500" } else if b.Percentage >= 80 { b.StatusColor = "bg-yellow-400" } else { b.StatusColor = "bg-brand-limeDark" }
+				b.FormattedSpent = formatRupiah(b.Spent)
+				b.FormattedLimit = formatRupiah(b.Limit)
+				topBudgets = append(topBudgets, b)
+			}
+		}
+
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Balance":        formatRupiah(balance),
 			"MonthlyExpense": formatRupiah(monthlyExpense),
 			"Transactions":   transactions,
-			"UserName":       user.Name,
-			"TopSavings":     topSavings,
+			"User": gin.H{
+				"Name":   user.Name,
+				"Avatar": getAvatarURL(user),
+			},
+			"TopSavings":  topSavings,
+			"TopBudgets":  topBudgets,
 		})
 	})
 
@@ -379,7 +460,7 @@ func main() {
 			if ext == "" {
 				ext = ".jpg"
 			}
-			filename := fmt.Sprintf("receipt_%d_%d%s", userID, time.Now().UnixNano(), ext)
+			filename := fmt.Sprintf("receipt_%d_%d%s", userID, nowWIB().UnixNano(), ext)
 			destPath := filepath.Join(uploadDir, filename)
 			out, err2 := os.Create(destPath)
 			if err2 == nil {
@@ -394,14 +475,30 @@ func main() {
 			if dateStr != "" {
 				parsedDate, err = time.Parse("2006-01-02T15:04", dateStr)
 				if err != nil {
-					parsedDate = time.Now()
+					parsedDate = nowWIB()
+				} else {
+					parsedDate = parsedDate.In(wib)
 				}
 			} else {
-				parsedDate = time.Now()
+				parsedDate = nowWIB()
 			}
+
+			// Validasi saldo untuk expense
+			if trxType == "expense" {
+				var totalIncome, totalExpense int
+				db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='income'", userID).Scan(&totalIncome)
+				db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='expense'", userID).Scan(&totalExpense)
+				amountInt, _ := strconv.Atoi(amount)
+				saldo := totalIncome - totalExpense
+				if saldo < amountInt {
+					c.Redirect(http.StatusFound, "/?error=saldo_kurang")
+					return
+				}
+			}
+
 			db.Exec(`INSERT INTO transactions (user_id, type, amount, category_id, note, date, receipt_path)
 				VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''))`,
-				userID, trxType, amount, categoryID, note, parsedDate, receiptPath)
+				userID, trxType, amount, categoryID, note, parsedDate.Format("2006-01-02 15:04:05"), receiptPath)
 		}
 		c.Redirect(http.StatusFound, "/?saved=1")
 	})
@@ -488,6 +585,53 @@ func main() {
 			netBalance = -netBalance
 		}
 
+		// Tren 6 bulan terakhir
+		type MonthTrend struct {
+			Month          string
+			Label          string
+			Income         int
+			Expense        int
+			FormattedIncome  string
+			FormattedExpense string
+		}
+		var trends []MonthTrend
+		now := time.Now().In(wib)
+		monthNames := []string{"", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"}
+		for i := 5; i >= 0; i-- {
+			t := now.AddDate(0, -i, 0)
+			m := t.Format("2006-01")
+			var inc, exp int
+			db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='income' AND substr(date,1,7)=?", userID, m).Scan(&inc)
+			db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='expense' AND substr(date,1,7)=?", userID, m).Scan(&exp)
+			label := monthNames[t.Month()] + " " + strconv.Itoa(t.Year())[2:]
+			trends = append(trends, MonthTrend{
+				Month: m, Label: label,
+				Income: inc, Expense: exp,
+				FormattedIncome: formatRupiah(inc), FormattedExpense: formatRupiah(exp),
+			})
+		}
+
+		// Max value for chart scaling
+		maxVal := 1
+		for _, tr := range trends {
+			if tr.Income > maxVal { maxVal = tr.Income }
+			if tr.Expense > maxVal { maxVal = tr.Expense }
+		}
+
+		type MonthTrendDisplay struct {
+			MonthTrend
+			IncomeH  int
+			ExpenseH int
+		}
+		var trendsDisplay []MonthTrendDisplay
+		for _, tr := range trends {
+			ih := tr.Income * 80 / maxVal
+			eh := tr.Expense * 80 / maxVal
+			if ih < 2 { ih = 2 }
+			if eh < 2 { eh = 2 }
+			trendsDisplay = append(trendsDisplay, MonthTrendDisplay{tr, ih, eh})
+		}
+
 		c.HTML(http.StatusOK, "stats.html", gin.H{
 			"TotalExpense":    formatRupiah(totalExpense),
 			"TotalExpenseRaw": totalExpense,
@@ -498,63 +642,121 @@ func main() {
 			"Stats":           stats,
 			"IncomeStats":     incomeStats,
 			"FilterMonth":     filterMonth,
+			"Trends":          trendsDisplay,
 		})
 	})
 
 	protected.GET("/targets", func(c *gin.Context) {
 		userID := GetCurrentUserID(c)
+		monthYear := c.DefaultQuery("month", time.Now().Format("2006-01"))
+
+		prevMonth := prevMonthStr(monthYear)
+		nextMonth := nextMonthStr(monthYear)
+		monthLabel := formatMonthLabel(monthYear)
 
 		rows, err := db.Query(`
-			SELECT c.name, c.icon, b.amount_limit,
-				   COALESCE((SELECT SUM(amount) FROM transactions WHERE category_id = c.id AND user_id = ? AND type = 'expense' AND substr(date, 1, 7) = substr(date('now'), 1, 7)), 0) as spent
-			FROM budgets b
-			JOIN categories c ON b.category_id = c.id
-			WHERE b.user_id = ? OR b.user_id IS NULL
-		`, userID, userID)
+			SELECT c.id, c.name, c.icon,
+				   COALESCE(b.amount_limit, 0) as budget_limit,
+				   COALESCE((SELECT SUM(amount) FROM transactions
+					         WHERE category_id = c.id AND user_id = ?
+					         AND type = 'expense'
+					         AND substr(date, 1, 7) = ?), 0) as spent
+			FROM categories c
+			LEFT JOIN budgets b ON b.category_id = c.id AND b.user_id = ? AND b.month_year = ?
+			WHERE c.type = 'expense'
+			  AND c.name NOT IN ('Transfer ke Tabungan', 'Tarik dari Tabungan')
+			  AND (c.user_id IS NULL OR c.user_id = ?)
+			ORDER BY c.name
+		`, userID, monthYear, userID, monthYear, userID)
 
-		var budgets []BudgetStat
-		var totalLimit, totalSpent int
-
+		var budgets []BudgetDisplay
+		var totalLimit, totalSpent, totalRemaining int
 		if err == nil {
 			defer rows.Close()
 			for rows.Next() {
-				var b BudgetStat
-				rows.Scan(&b.CategoryName, &b.Icon, &b.Limit, &b.Spent)
+				var b BudgetDisplay
+				rows.Scan(&b.CategoryID, &b.CategoryName, &b.Icon, &b.Limit, &b.Spent)
 
 				if b.Limit > 0 {
 					b.Percentage = (b.Spent * 100) / b.Limit
-				} else {
-					b.Percentage = 0
 				}
-
 				if b.Percentage >= 100 {
 					b.Percentage = 100
-					b.StatusColor = "bg-[#ff4d4f]"
+					b.StatusColor = "bg-red-500"
+					b.StatusText = "Over budget!"
 				} else if b.Percentage >= 80 {
 					b.StatusColor = "bg-yellow-400"
+					b.StatusText = "Hampir habis"
+				} else if b.Percentage >= 50 {
+					b.StatusColor = "bg-brand-lime"
+					b.StatusText = "On track"
 				} else {
 					b.StatusColor = "bg-brand-limeDark"
+					b.StatusText = "Aman"
 				}
 
+				b.Remaining = b.Limit - b.Spent
+				if b.Remaining < 0 {
+					b.Remaining = 0
+				}
 				b.FormattedLimit = formatRupiah(b.Limit)
 				b.FormattedSpent = formatRupiah(b.Spent)
-				sisa := b.Limit - b.Spent
-				if sisa < 0 {
-					sisa = 0
-				}
-				b.FormattedSisa = formatRupiah(sisa)
+				b.FormattedSisa = formatRupiah(b.Remaining)
 
 				totalLimit += b.Limit
 				totalSpent += b.Spent
+				totalRemaining += b.Remaining
 				budgets = append(budgets, b)
 			}
 		}
 
+		totalPct := 0
+		if totalLimit > 0 {
+			totalPct = (totalSpent * 100) / totalLimit
+			if totalPct > 100 {
+				totalPct = 100
+			}
+		}
+
 		c.HTML(http.StatusOK, "targets.html", gin.H{
-			"Budgets":    budgets,
-			"TotalLimit": formatRupiah(totalLimit),
-			"TotalSpent": formatRupiah(totalSpent),
+			"Budgets":        budgets,
+			"TotalLimit":     formatRupiah(totalLimit),
+			"TotalSpent":     formatRupiah(totalSpent),
+			"TotalRemaining": formatRupiah(totalRemaining),
+			"TotalPct":       totalPct,
+			"TotalLimitRaw":  totalLimit,
+			"MonthYear":      monthYear,
+			"MonthLabel":     monthLabel,
+			"PrevMonth":      prevMonth,
+			"NextMonth":      nextMonth,
 		})
+	})
+
+	protected.POST("/api/budget", func(c *gin.Context) {
+		userID := GetCurrentUserID(c)
+		categoryID, _ := strconv.Atoi(c.PostForm("category_id"))
+		limit, _ := strconv.Atoi(c.PostForm("amount_limit"))
+		monthYear := c.DefaultPostForm("month_year", time.Now().Format("2006-01"))
+
+		if categoryID == 0 || limit <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Kategori dan nominal wajib diisi"})
+			return
+		}
+
+		db.Exec(`INSERT INTO budgets (user_id, category_id, amount_limit, month_year)
+			     VALUES (?, ?, ?, ?)
+			     ON CONFLICT(user_id, category_id, month_year) DO UPDATE SET amount_limit=?`,
+			userID, categoryID, limit, monthYear, limit)
+
+		c.JSON(http.StatusOK, gin.H{"message": "Anggaran berhasil disimpan"})
+	})
+
+	protected.DELETE("/api/budget", func(c *gin.Context) {
+		userID := GetCurrentUserID(c)
+		categoryID := c.Query("category_id")
+		monthYear := c.DefaultQuery("month_year", time.Now().Format("2006-01"))
+		db.Exec("DELETE FROM budgets WHERE user_id=? AND category_id=? AND month_year=?", userID, categoryID, monthYear)
+		c.JSON(http.StatusOK, gin.H{"message": "Anggaran dihapus"})
 	})
 
 	protected.GET("/history", func(c *gin.Context) {
@@ -754,6 +956,50 @@ func main() {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Profil berhasil diperbarui"})
+	})
+
+	protected.POST("/api/avatar/preset", func(c *gin.Context) {
+		userID := GetCurrentUserID(c)
+		var req struct {
+			Index int `json:"index"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
+		}
+		colors := []string{"c3f545", "01381b", "3b82f6", "8b5cf6", "ec4899", "f59e0b", "10b981", "6366f1"}
+		if req.Index < 0 || req.Index >= len(colors) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid avatar index"})
+			return
+		}
+		user, _ := GetCurrentUser(c)
+		url := fmt.Sprintf("https://ui-avatars.com/api/?name=%s&background=%s&color=ffffff&rounded=true&bold=true&size=200", user.Name, colors[req.Index])
+		db.Exec("UPDATE users SET avatar=? WHERE id=?", url, userID)
+		c.JSON(http.StatusOK, gin.H{"avatar": url, "message": "Avatar berhasil diperbarui"})
+	})
+
+	protected.POST("/api/avatar/upload", func(c *gin.Context) {
+		userID := GetCurrentUserID(c)
+		file, err := c.FormFile("avatar")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "File tidak ditemukan"})
+			return
+		}
+		if file.Size > 2*1024*1024 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "File maksimal 2MB"})
+			return
+		}
+		ext := filepath.Ext(file.Filename)
+		filename := fmt.Sprintf("avatar_%d_%d%s", userID, time.Now().Unix(), ext)
+		savePath := filepath.Join("static", "avatars", filename)
+		os.MkdirAll(filepath.Join("static", "avatars"), 0755)
+		if err := c.SaveUploadedFile(file, savePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
+			return
+		}
+		url := "/static/avatars/" + filename
+		db.Exec("UPDATE users SET avatar=? WHERE id=?", url, userID)
+		c.JSON(http.StatusOK, gin.H{"avatar": url, "message": "Avatar berhasil diperbarui"})
 	})
 
 	protected.POST("/api/ocr", func(c *gin.Context) {
@@ -1086,71 +1332,11 @@ func main() {
 		})
 	})
 
-	protected.POST("/api/budget", func(c *gin.Context) {
-		userID := GetCurrentUserID(c)
-		categoryID := c.PostForm("category_id")
-		amountLimit := c.PostForm("amount_limit")
-		monthYear := c.PostForm("month_year")
-
-		if categoryID == "" || amountLimit == "" || monthYear == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
-			return
-		}
-
-		_, err := db.Exec(`
-			INSERT INTO budgets (user_id, category_id, amount_limit, month_year)
-			VALUES (?, ?, ?, ?)
-		`, userID, categoryID, amountLimit, monthYear)
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create budget"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Budget created successfully"})
-	})
-
-	protected.PUT("/api/budget/:id", func(c *gin.Context) {
-		userID := GetCurrentUserID(c)
-		budgetID := c.Param("id")
-		categoryID := c.PostForm("category_id")
-		amountLimit := c.PostForm("amount_limit")
-		monthYear := c.PostForm("month_year")
-
-		_, err := db.Exec(`
-			UPDATE budgets
-			SET category_id = ?, amount_limit = ?, month_year = ?
-			WHERE id = ? AND user_id = ?
-		`, categoryID, amountLimit, monthYear, budgetID, userID)
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update budget"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Budget updated successfully"})
-	})
-
-	protected.DELETE("/api/budget/:id", func(c *gin.Context) {
-		userID := GetCurrentUserID(c)
-		budgetID := c.Param("id")
-
-		_, err := db.Exec("DELETE FROM budgets WHERE id = ? AND user_id = ?", budgetID, userID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete budget"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Budget deleted successfully"})
-	})
-
-	// Budget management page
-	protected.GET("/budget/manage", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "budget_manage.html", gin.H{})
-	})
-
 	// Register savings routes
 	RegisterSavingsRoutes(protected)
+	RegisterRecurringRoutes(protected)
+	RegisterCategoryRoutes(protected)
+	RegisterAIRoutes(protected)
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {

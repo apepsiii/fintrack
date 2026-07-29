@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>FinBot AI - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] }, colors: { brand: { lime:'#c3f545', limeDark:'#a3d124', dark:'#01381b', muted:'#809b8d' } } } }
+        }
+    </script>
+    <style>
+        body{background:#f1f5f9}::-webkit-scrollbar{display:none}
+        .fab-shadow{box-shadow:0 -4px 20px rgba(195,245,69,.2)}
+        .chat-bubble p { margin-bottom: 0.5rem; }
+        .chat-bubble ul { list-style: disc; padding-left: 1.2rem; margin-bottom: 0.5rem; }
+        .chat-bubble li { margin-bottom: 0.2rem; }
+        .typing-dot { animation: typing 1.2s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+    <header class="pt-8 px-6 flex justify-between items-center mb-2 shrink-0">
+        <div class="flex items-center gap-3">
+            <a href="/" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="ph ph-caret-left text-xl text-brand-dark"></i>
+            </a>
+            <div>
+                <h1 class="text-lg font-bold text-brand-dark leading-tight">FinBot</h1>
+                <p class="text-[10px] text-brand-muted">{{ if .AIConfigured }}{{ .AIModel }} · {{ .AIProvider }}{{ else }}AI belum dikonfigurasi{{ end }}</p>
+            </div>
+        </div>
+        <div class="w-10 h-10 rounded-full {{ if .AIConfigured }}bg-brand-lime{{ else }}bg-gray-200{{ end }} flex items-center justify-center">
+            <i class="ph ph-robot text-xl {{ if .AIConfigured }}text-brand-dark{{ else }}text-brand-muted{{ end }}"></i>
+        </div>
+    </header>
+
+    {{ if not .AIConfigured }}
+    <div class="px-6 py-3 shrink-0">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex gap-3">
+            <i class="ph ph-warning text-yellow-500 text-lg shrink-0 mt-0.5"></i>
+            <div>
+                <p class="text-sm font-bold text-brand-dark mb-1">AI belum dikonfigurasi</p>
+                <p class="text-xs text-brand-muted">Tambahkan <code class="bg-gray-100 px-1 rounded">AI_API_KEY</code> di file <code class="bg-gray-100 px-1 rounded">.env</code> untuk mengaktifkan FinBot.</p>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+
+    <!-- Chat Area -->
+    <div id="chatArea" class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 pb-4">
+        <!-- Welcome message -->
+        <div class="flex items-start gap-2">
+            <div class="w-8 h-8 rounded-full bg-brand-lime flex items-center justify-center shrink-0 mt-1">
+                <i class="ph ph-robot text-sm text-brand-dark"></i>
+            </div>
+            <div class="chat-bubble bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
+                <p class="text-sm text-brand-dark font-medium">Hai! Saya FinBot, asisten keuangan kamu. 👋</p>
+                <p class="text-xs text-brand-muted mt-1">Tanya apa saja tentang keuangan, atau minta saya analisis kondisi keuanganmu.</p>
+            </div>
+        </div>
+
+        <!-- Quick suggestions -->
+        <div class="flex flex-wrap gap-2 ml-10">
+            <button onclick="sendQuick('Analisis kondisi keuangan saya bulan ini')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">📊 Analisis bulan ini</button>
+            <button onclick="sendQuick('Tips hemat uang untuk saya')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">💡 Tips hemat</button>
+            <button onclick="sendQuick('Saran investasi yang cocok untuk saya')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">📈 Saran investasi</button>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="px-4 pb-24 shrink-0">
+        <div class="flex gap-2 items-end bg-gray-50 border border-gray-200 rounded-2xl p-2">
+            <textarea id="msgInput" placeholder="{{ if .AIConfigured }}Tanya FinBot...{{ else }}Konfigurasi AI dulu di .env{{ end }}"
+                {{ if not .AIConfigured }}disabled{{ end }}
+                rows="1"
+                class="flex-1 bg-transparent text-sm text-brand-dark font-medium resize-none focus:outline-none placeholder-gray-400 max-h-24 py-2 px-2"
+                onkeydown="handleKey(event)"
+                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <button onclick="sendMessage()" {{ if not .AIConfigured }}disabled{{ end }}
+                class="w-10 h-10 rounded-xl bg-brand-lime flex items-center justify-center shrink-0 transition active:scale-95 disabled:opacity-40">
+                <i class="ph ph-paper-plane-right text-lg text-brand-dark"></i>
+            </button>
+        </div>
+        <p class="text-[9px] text-brand-muted text-center mt-1.5">FinBot dapat membuat kesalahan. Verifikasi informasi penting.</p>
+    </div>
+
+    <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pt-2 px-6 pb-6 z-50">
+        <div class="flex justify-between items-center relative">
+            <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-house text-2xl"></i><span class="text-[9px]">Beranda</span></a>
+            <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-chart-bar text-2xl"></i><span class="text-[9px]">Statistik</span></a>
+            <div class="relative -top-6 flex justify-center w-14"><a href="/" class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow"><i class="ph ph-plus text-2xl"></i></a></div>
+            <a href="/savings" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-piggy-bank text-2xl"></i><span class="text-[9px]">Tabungan</span></a>
+            <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-user text-2xl"></i><span class="text-[9px]">Profil</span></a>
+        </div>
+    </nav>
+</main>
+
+<script>
+    const isAnalyze = (msg) => msg.toLowerCase().includes('analisis') || msg.toLowerCase().includes('kondisi keuangan');
+
+    function addMessage(text, isUser) {
+        const area = document.getElementById('chatArea');
+        const div = document.createElement('div');
+        div.className = isUser ? 'flex justify-end' : 'flex items-start gap-2';
+
+        if (isUser) {
+            div.innerHTML = `<div class="bg-brand-dark text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%] text-sm font-medium">${escHtml(text)}</div>`;
+        } else {
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-brand-lime flex items-center justify-center shrink-0 mt-1">
+                    <i class="ph ph-robot text-sm text-brand-dark"></i>
+                </div>
+                <div class="chat-bubble bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%] text-sm text-brand-dark">${formatMD(text)}</div>`;
+        }
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+        return div;
+    }
+
+    function addTyping() {
+        const area = document.getElementById('chatArea');
+        const div = document.createElement('div');
+        div.id = 'typingIndicator';
+        div.className = 'flex items-start gap-2';
+        div.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-brand-lime flex items-center justify-center shrink-0 mt-1">
+                <i class="ph ph-robot text-sm text-brand-dark"></i>
+            </div>
+            <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1 items-center">
+                <span class="typing-dot w-2 h-2 bg-brand-muted rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-brand-muted rounded-full inline-block"></span>
+                <span class="typing-dot w-2 h-2 bg-brand-muted rounded-full inline-block"></span>
+            </div>`;
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+    }
+
+    function removeTyping() {
+        const el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+
+    function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function formatMD(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^### (.*)/gm, '<p class="font-bold text-brand-dark mt-2">$1</p>')
+            .replace(/^## (.*)/gm, '<p class="font-bold text-brand-dark mt-2">$1</p>')
+            .replace(/^- (.*)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+            .replace(/\n/g, '<br>');
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('msgInput');
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        input.value = '';
+        input.style.height = 'auto';
+        addMessage(msg, true);
+        addTyping();
+
+        try {
+            const fd = new FormData();
+            const endpoint = isAnalyze(msg) ? '/api/ai/analyze' : '/api/ai/chat';
+            if (isAnalyze(msg)) fd.append('question', msg);
+            else fd.append('message', msg);
+
+            const res = await fetch(endpoint, { method: 'POST', body: fd });
+            const data = await res.json();
+            removeTyping();
+
+            if (res.ok) addMessage(data.response, false);
+            else addMessage('Maaf, terjadi kesalahan: ' + (data.error || 'Coba lagi'), false);
+        } catch(e) {
+            removeTyping();
+            addMessage('Gagal terhubung ke FinBot. Periksa koneksi dan konfigurasi AI.', false);
+        }
+    }
+
+    function sendQuick(msg) {
+        document.getElementById('msgInput').value = msg;
+        sendMessage();
+    }
+
+    function handleKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+</script>
+</body>
+</html>

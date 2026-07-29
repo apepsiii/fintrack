@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>Transaksi Berulang - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] }, colors: { brand: { lime:'#c3f545', limeDark:'#a3d124', dark:'#01381b', muted:'#809b8d' } } } }
+        }
+    </script>
+    <style>body{background:#f1f5f9}::-webkit-scrollbar{display:none}.fab-shadow{box-shadow:0 -4px 20px rgba(195,245,69,.2)}</style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+    <header class="pt-8 px-6 flex justify-between items-center mb-4">
+        <div class="flex items-center gap-3">
+            <a href="/" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="ph ph-caret-left text-xl text-brand-dark"></i>
+            </a>
+            <h1 class="text-xl font-bold text-brand-dark">Transaksi Berulang</h1>
+        </div>
+        <button onclick="openAddModal()" class="w-10 h-10 rounded-full bg-brand-lime flex items-center justify-center transition active:scale-95 text-brand-dark shadow-sm">
+            <i class="ph ph-plus text-xl"></i>
+        </button>
+    </header>
+
+    <div class="px-6 mb-4">
+        <div class="bg-brand-lime/10 border border-brand-lime/30 rounded-2xl p-3 flex items-center gap-3">
+            <i class="ph ph-info text-brand-dark text-lg shrink-0"></i>
+            <p class="text-xs text-brand-dark font-medium">Transaksi berulang diproses otomatis setiap kamu membuka halaman ini.</p>
+        </div>
+    </div>
+
+    <section class="px-6 pb-28 flex-1 overflow-y-auto">
+        {{ if .Recurring }}
+        <div class="flex flex-col gap-3">
+            {{ range .Recurring }}
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 group">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl {{ if eq .Type "income" }}bg-green-50{{ else }}bg-red-50{{ end }} flex items-center justify-center shrink-0">
+                            <i class="ph {{ .Icon }} text-lg {{ if eq .Type "income" }}text-green-500{{ else }}text-red-400{{ end }}"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-brand-dark">{{ .Name }}</p>
+                            <p class="text-[10px] text-brand-muted">{{ .FrequencyLabel }} · {{ .Category }}</p>
+                            <p class="text-[10px] text-brand-muted">Berikutnya: {{ .NextDate }}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <p class="text-sm font-bold {{ if eq .Type "income" }}text-green-600{{ else }}text-red-500{{ end }}">
+                            {{ if eq .Type "income" }}+{{ else }}-{{ end }}Rp {{ .FormattedAmount }}
+                        </p>
+                        <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="toggleActive({{ .ID }}, {{ .IsActive }})" class="w-7 h-7 rounded-lg {{ if .IsActive }}bg-brand-lime/20{{ else }}bg-gray-200{{ end }} flex items-center justify-center transition">
+                                <i class="ph {{ if .IsActive }}ph-pause{{ else }}ph-play{{ end }} text-xs text-brand-dark"></i>
+                            </button>
+                            <button onclick="deleteRecurring({{ .ID }})" class="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center transition">
+                                <i class="ph ph-trash text-xs text-red-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {{ if not .IsActive }}
+                <div class="mt-2 text-[10px] text-brand-muted bg-gray-100 rounded-xl px-3 py-1.5 inline-block">Dijeda</div>
+                {{ end }}
+            </div>
+            {{ end }}
+        </div>
+        {{ else }}
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-20 h-20 bg-brand-lime/10 rounded-full flex items-center justify-center mb-4">
+                <i class="ph ph-repeat text-4xl text-brand-dark"></i>
+            </div>
+            <h3 class="text-base font-bold text-brand-dark mb-2">Belum ada transaksi berulang</h3>
+            <p class="text-sm text-brand-muted mb-6 max-w-[240px]">Atur otomasi untuk tagihan, gaji, atau cicilan yang rutin tiap bulan</p>
+            <button onclick="openAddModal()" class="bg-brand-lime text-brand-dark px-6 py-3 rounded-2xl font-bold text-sm active:scale-95 transition">Tambah Sekarang</button>
+        </div>
+        {{ end }}
+    </section>
+
+    <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pt-2 px-6 pb-6 mt-auto z-50">
+        <div class="flex justify-between items-center relative">
+            <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-house text-2xl"></i><span class="text-[9px]">Beranda</span></a>
+            <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-chart-bar text-2xl"></i><span class="text-[9px]">Statistik</span></a>
+            <div class="relative -top-6 flex justify-center w-14"><a href="/" class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow"><i class="ph ph-plus text-2xl"></i></a></div>
+            <a href="/savings" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-piggy-bank text-2xl"></i><span class="text-[9px]">Tabungan</span></a>
+            <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-user text-2xl"></i><span class="text-[9px]">Profil</span></a>
+        </div>
+    </nav>
+</main>
+
+<!-- Add Modal -->
+<div id="addBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeAddModal()"></div>
+<div id="addModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div class="p-6 pb-8">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Tambah Transaksi Berulang</h2>
+        <form id="addForm" class="flex flex-col gap-4">
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none"><i class="ph ph-pencil-simple text-brand-dark"></i></div>
+                <input type="text" name="name" placeholder="Nama (misal: Bayar Listrik)" required class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <div class="flex gap-3">
+                <button type="button" id="btnExp" onclick="setTxType('expense')" class="flex-1 py-3 rounded-2xl text-sm font-bold bg-red-50 text-red-500 border-2 border-red-200">Pengeluaran</button>
+                <button type="button" id="btnInc" onclick="setTxType('income')" class="flex-1 py-3 rounded-2xl text-sm font-bold bg-gray-50 text-brand-muted border-2 border-gray-100">Pemasukan</button>
+            </div>
+            <input type="hidden" name="type" id="txTypeInput" value="expense">
+            <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-muted font-bold">Rp</span>
+                <input type="number" name="amount" placeholder="0" required class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-bold text-xl rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-lime">
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none"><i class="ph ph-tag text-brand-dark"></i></div>
+                <select name="category_id" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm appearance-none">
+                    {{ range .Categories }}
+                    <option value="{{ .ID }}">[{{ if eq .Type "income" }}Masuk{{ else }}Keluar{{ end }}] {{ .Name }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none"><i class="ph ph-repeat text-brand-dark"></i></div>
+                <select name="frequency" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm appearance-none">
+                    <option value="daily">Setiap Hari</option>
+                    <option value="weekly">Setiap Minggu</option>
+                    <option value="monthly" selected>Setiap Bulan</option>
+                    <option value="yearly">Setiap Tahun</option>
+                </select>
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none"><i class="ph ph-calendar text-brand-dark"></i></div>
+                <input type="date" name="start_date" id="startDate" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none"><i class="ph ph-note text-brand-dark"></i></div>
+                <input type="text" name="note" placeholder="Catatan (opsional)" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm placeholder-gray-400">
+            </div>
+            <button type="submit" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-sm transition active:scale-95">Simpan</button>
+        </form>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+    <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold"><i id="toastIcon" class="text-xl"></i><span id="toastMessage"></span></div>
+</div>
+
+<script>
+    document.getElementById('startDate').value = new Date().toISOString().slice(0,10);
+
+    function setTxType(type) {
+        document.getElementById('txTypeInput').value = type;
+        document.getElementById('btnExp').className = type === 'expense'
+            ? 'flex-1 py-3 rounded-2xl text-sm font-bold bg-red-50 text-red-500 border-2 border-red-200'
+            : 'flex-1 py-3 rounded-2xl text-sm font-bold bg-gray-50 text-brand-muted border-2 border-gray-100';
+        document.getElementById('btnInc').className = type === 'income'
+            ? 'flex-1 py-3 rounded-2xl text-sm font-bold bg-green-50 text-green-500 border-2 border-green-200'
+            : 'flex-1 py-3 rounded-2xl text-sm font-bold bg-gray-50 text-brand-muted border-2 border-gray-100';
+    }
+
+    function openAddModal() {
+        document.getElementById('addBackdrop').classList.remove('hidden');
+        setTimeout(() => { document.getElementById('addBackdrop').classList.remove('opacity-0'); document.getElementById('addModal').classList.remove('translate-y-full'); }, 10);
+    }
+    function closeAddModal() {
+        document.getElementById('addBackdrop').classList.add('opacity-0'); document.getElementById('addModal').classList.add('translate-y-full');
+        setTimeout(() => document.getElementById('addBackdrop').classList.add('hidden'), 300);
+    }
+
+    function showToast(msg, type='success') {
+        const content = document.getElementById('toastContent');
+        document.getElementById('toastMessage').textContent = msg;
+        content.className = type === 'success'
+            ? 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white'
+            : 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+        document.getElementById('toastIcon').className = type === 'success' ? 'ph ph-check-circle text-brand-lime text-xl' : 'ph ph-x-circle text-white text-xl';
+        const toast = document.getElementById('toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.remove('translate-y-[-20px]','opacity-0'), 10);
+        setTimeout(() => { toast.classList.add('translate-y-[-20px]','opacity-0'); setTimeout(() => toast.classList.add('hidden'), 300); }, 3000);
+    }
+
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await fetch('/api/recurring', { method: 'POST', body: new FormData(e.target) });
+        const data = await res.json();
+        if (res.ok) { closeAddModal(); showToast('Berhasil disimpan'); setTimeout(() => location.reload(), 600); }
+        else showToast(data.error || 'Gagal', 'error');
+    });
+
+    async function toggleActive(id, isActive) {
+        const fd = new FormData();
+        fd.append('is_active', isActive ? '0' : '1');
+        fd.append('name', ''); fd.append('amount', '0'); fd.append('category_id', '1'); fd.append('frequency', 'monthly');
+        await fetch('/api/recurring/' + id, { method: 'PUT', body: fd });
+        location.reload();
+    }
+
+    async function deleteRecurring(id) {
+        if (!confirm('Hapus transaksi berulang ini?')) return;
+        const res = await fetch('/api/recurring/' + id, { method: 'DELETE' });
+        if (res.ok) { showToast('Berhasil dihapus'); setTimeout(() => location.reload(), 600); }
+    }
+</script>
+</body>
+</html>

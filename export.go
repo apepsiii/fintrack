@@ -467,3 +467,10 @@ func formatRupiah(amount int) string {
 
 	return result
 }
+
+func getAvatarURL(u *User) string {
+	if u.Avatar != "" {
+		return u.Avatar
+	}
+	return "https://ui-avatars.com/api/?name=" + u.Name + "&background=c3f545&color=01381b&rounded=true&bold=true"
+}

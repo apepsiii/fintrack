@@ -8,6 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var wib = time.FixedZone("WIB", 7*60*60)
+
+func nowWIB() time.Time {
+	return time.Now().In(wib)
+}
+
 // Savings represents a savings/investment goal
 type Savings struct {
 	ID              int       `json:"id"`
@@ -340,11 +346,20 @@ func RegisterSavingsRoutes(protected *gin.RouterGroup) {
 		// Calculate new amount
 		newAmount := currentAmount
 		if txType == "deposit" {
+			// Validasi saldo utama mencukupi
+			var totalIncome, totalExpense int
+			db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='income'", userID).Scan(&totalIncome)
+			db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='expense'", userID).Scan(&totalExpense)
+			saldoUtama := totalIncome - totalExpense
+			if saldoUtama < amount {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Saldo utama tidak mencukupi (Rp " + formatRupiah(saldoUtama) + " tersedia)"})
+				return
+			}
 			newAmount += amount
 		} else if txType == "withdraw" {
 			newAmount -= amount
 			if newAmount < 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Saldo tidak mencukupi"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Saldo tabungan tidak mencukupi"})
 				return
 			}
 		} else {
@@ -365,20 +380,18 @@ func RegisterSavingsRoutes(protected *gin.RouterGroup) {
 
 		var linkedTxID int64
 		if txType == "deposit" && transferOutCatID > 0 {
-			// Debit saldo utama: catat sebagai pengeluaran
 			res, err := db.Exec(`
-				INSERT INTO transactions (user_id, type, amount, category_id, note)
-				VALUES (?, 'expense', ?, ?, ?)
-			`, userID, amount, transferOutCatID, txNote)
+				INSERT INTO transactions (user_id, type, amount, category_id, note, date)
+				VALUES (?, 'expense', ?, ?, ?, ?)
+			`, userID, amount, transferOutCatID, txNote, nowWIB().Format("2006-01-02 15:04:05"))
 			if err == nil {
 				linkedTxID, _ = res.LastInsertId()
 			}
 		} else if txType == "withdraw" && transferInCatID > 0 {
-			// Kredit saldo utama: catat sebagai pemasukan
 			res, err := db.Exec(`
-				INSERT INTO transactions (user_id, type, amount, category_id, note)
-				VALUES (?, 'income', ?, ?, ?)
-			`, userID, amount, transferInCatID, txNote)
+				INSERT INTO transactions (user_id, type, amount, category_id, note, date)
+				VALUES (?, 'income', ?, ?, ?, ?)
+			`, userID, amount, transferInCatID, txNote, nowWIB().Format("2006-01-02 15:04:05"))
 			if err == nil {
 				linkedTxID, _ = res.LastInsertId()
 			}

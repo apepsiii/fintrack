@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>Kategori - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] }, colors: { brand: { lime:'#c3f545', limeDark:'#a3d124', dark:'#01381b', muted:'#809b8d' } } } }
+        }
+    </script>
+    <style>body{background:#f1f5f9}::-webkit-scrollbar{display:none}.fab-shadow{box-shadow:0 -4px 20px rgba(195,245,69,.2)}</style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+    <header class="pt-8 px-6 flex justify-between items-center mb-4">
+        <div class="flex items-center gap-3">
+            <a href="/profile" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="ph ph-caret-left text-xl text-brand-dark"></i>
+            </a>
+            <h1 class="text-xl font-bold text-brand-dark">Kelola Kategori</h1>
+        </div>
+        <button onclick="openAddModal()" class="w-10 h-10 rounded-full bg-brand-lime flex items-center justify-center transition active:scale-95 text-brand-dark shadow-sm">
+            <i class="ph ph-plus text-xl"></i>
+        </button>
+    </header>
+
+    <section class="px-6 pb-28 flex-1 overflow-y-auto">
+        <!-- Expense -->
+        <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Pengeluaran</p>
+        <div class="flex flex-col gap-2 mb-6">
+            {{ range .Categories }}{{ if eq .Type "expense" }}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                        <i class="ph {{ .Icon }} text-lg text-red-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">{{ .Name }}</p>
+                        {{ if .IsCustom }}<span class="text-[9px] bg-brand-lime/30 text-brand-dark px-2 py-0.5 rounded-full font-semibold">Custom</span>{{ else }}<span class="text-[9px] text-brand-muted">Default</span>{{ end }}
+                    </div>
+                </div>
+                {{ if .IsCustom }}
+                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                    <button onclick="openEditModal({{ .ID }}, '{{ .Name }}', '{{ .Icon }}')" class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-brand-lime/20 transition">
+                        <i class="ph ph-pencil-simple text-sm text-brand-dark"></i>
+                    </button>
+                    <button onclick="deleteCategory({{ .ID }})" class="w-8 h-8 rounded-lg bg-white border border-red-200 flex items-center justify-center hover:bg-red-50 transition">
+                        <i class="ph ph-trash text-sm text-red-500"></i>
+                    </button>
+                </div>
+                {{ end }}
+            </div>
+            {{ end }}{{ end }}
+        </div>
+
+        <!-- Income -->
+        <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Pemasukan</p>
+        <div class="flex flex-col gap-2">
+            {{ range .Categories }}{{ if eq .Type "income" }}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                        <i class="ph {{ .Icon }} text-lg text-green-500"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">{{ .Name }}</p>
+                        {{ if .IsCustom }}<span class="text-[9px] bg-brand-lime/30 text-brand-dark px-2 py-0.5 rounded-full font-semibold">Custom</span>{{ else }}<span class="text-[9px] text-brand-muted">Default</span>{{ end }}
+                    </div>
+                </div>
+                {{ if .IsCustom }}
+                <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                    <button onclick="openEditModal({{ .ID }}, '{{ .Name }}', '{{ .Icon }}')" class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-brand-lime/20 transition">
+                        <i class="ph ph-pencil-simple text-sm text-brand-dark"></i>
+                    </button>
+                    <button onclick="deleteCategory({{ .ID }})" class="w-8 h-8 rounded-lg bg-white border border-red-200 flex items-center justify-center hover:bg-red-50 transition">
+                        <i class="ph ph-trash text-sm text-red-500"></i>
+                    </button>
+                </div>
+                {{ end }}
+            </div>
+            {{ end }}{{ end }}
+        </div>
+    </section>
+
+    <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pt-2 px-6 pb-6 mt-auto z-50">
+        <div class="flex justify-between items-center relative">
+            <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-house text-2xl"></i><span class="text-[9px]">Beranda</span></a>
+            <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-chart-bar text-2xl"></i><span class="text-[9px]">Statistik</span></a>
+            <div class="relative -top-6 flex justify-center w-14"><a href="/" class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow"><i class="ph ph-plus text-2xl"></i></a></div>
+            <a href="/savings" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-piggy-bank text-2xl"></i><span class="text-[9px]">Tabungan</span></a>
+            <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white"><i class="ph-fill ph-user text-2xl"></i><span class="text-[9px]">Profil</span></a>
+        </div>
+    </nav>
+</main>
+
+<!-- Add Modal -->
+<div id="addBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeAddModal()"></div>
+<div id="addModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div class="p-6 pb-8">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Tambah Kategori</h2>
+        <form id="addForm" class="flex flex-col gap-4">
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none"><i class="ph ph-tag text-brand-dark"></i></div>
+                <input type="text" name="name" placeholder="Nama kategori" required class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <div class="flex gap-3">
+                <button type="button" id="btnExpense" onclick="setType('expense')" class="flex-1 py-3 rounded-2xl text-sm font-bold bg-red-50 text-red-500 border-2 border-red-200 transition">Pengeluaran</button>
+                <button type="button" id="btnIncome" onclick="setType('income')" class="flex-1 py-3 rounded-2xl text-sm font-bold bg-gray-50 text-brand-muted border-2 border-gray-100 transition">Pemasukan</button>
+            </div>
+            <input type="hidden" name="type" id="catType" value="expense">
+            <div>
+                <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-2">Pilih Icon</p>
+                <div class="grid grid-cols-8 gap-1.5 max-h-40 overflow-y-auto">
+                    {{ range .Icons }}
+                    <button type="button" onclick="selectIcon('{{ . }}')" id="icon_{{ . }}" class="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-50 hover:bg-brand-lime/20 transition icon-btn">
+                        <i class="ph {{ . }} text-lg text-brand-dark"></i>
+                    </button>
+                    {{ end }}
+                </div>
+                <input type="hidden" name="icon" id="selectedIcon" value="ph-tag">
+            </div>
+            <button type="submit" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-sm transition active:scale-95">Simpan Kategori</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeEditModal()"></div>
+<div id="editModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+    <div class="p-6 pb-8">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Edit Kategori</h2>
+        <form id="editForm" class="flex flex-col gap-4">
+            <input type="hidden" id="editCatID">
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none"><i class="ph ph-tag text-brand-dark"></i></div>
+                <input type="text" name="name" id="editName" required class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <button type="submit" class="w-full bg-brand-dark text-white py-4 rounded-2xl font-bold text-sm transition active:scale-95">Simpan Perubahan</button>
+        </form>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+    <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold"><i id="toastIcon" class="text-xl"></i><span id="toastMessage"></span></div>
+</div>
+
+<script>
+    let selectedType = 'expense';
+    let selectedIconVal = 'ph-tag';
+
+    function setType(type) {
+        selectedType = type;
+        document.getElementById('catType').value = type;
+        document.getElementById('btnExpense').className = type === 'expense'
+            ? 'flex-1 py-3 rounded-2xl text-sm font-bold bg-red-50 text-red-500 border-2 border-red-200 transition'
+            : 'flex-1 py-3 rounded-2xl text-sm font-bold bg-gray-50 text-brand-muted border-2 border-gray-100 transition';
+        document.getElementById('btnIncome').className = type === 'income'
+            ? 'flex-1 py-3 rounded-2xl text-sm font-bold bg-green-50 text-green-500 border-2 border-green-200 transition'
+            : 'flex-1 py-3 rounded-2xl text-sm font-bold bg-gray-50 text-brand-muted border-2 border-gray-100 transition';
+    }
+
+    function selectIcon(icon) {
+        selectedIconVal = icon;
+        document.getElementById('selectedIcon').value = icon;
+        document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('bg-brand-lime/40', 'border-2', 'border-brand-lime'));
+        const btn = document.getElementById('icon_' + icon);
+        if (btn) btn.classList.add('bg-brand-lime/40', 'border-2', 'border-brand-lime');
+    }
+
+    function openAddModal() {
+        document.getElementById('addBackdrop').classList.remove('hidden');
+        setTimeout(() => { document.getElementById('addBackdrop').classList.remove('opacity-0'); document.getElementById('addModal').classList.remove('translate-y-full'); }, 10);
+    }
+    function closeAddModal() {
+        document.getElementById('addBackdrop').classList.add('opacity-0'); document.getElementById('addModal').classList.add('translate-y-full');
+        setTimeout(() => document.getElementById('addBackdrop').classList.add('hidden'), 300);
+    }
+    function openEditModal(id, name, icon) {
+        document.getElementById('editCatID').value = id;
+        document.getElementById('editName').value = name;
+        document.getElementById('editBackdrop').classList.remove('hidden');
+        setTimeout(() => { document.getElementById('editBackdrop').classList.remove('opacity-0'); document.getElementById('editModal').classList.remove('translate-y-full'); }, 10);
+    }
+    function closeEditModal() {
+        document.getElementById('editBackdrop').classList.add('opacity-0'); document.getElementById('editModal').classList.add('translate-y-full');
+        setTimeout(() => document.getElementById('editBackdrop').classList.add('hidden'), 300);
+    }
+
+    function showToast(msg, type='success') {
+        const content = document.getElementById('toastContent');
+        const icon = document.getElementById('toastIcon');
+        document.getElementById('toastMessage').textContent = msg;
+        content.className = type === 'success'
+            ? 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white'
+            : 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+        icon.className = type === 'success' ? 'ph ph-check-circle text-brand-lime text-xl' : 'ph ph-x-circle text-white text-xl';
+        const toast = document.getElementById('toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.remove('translate-y-[-20px]','opacity-0'), 10);
+        setTimeout(() => { toast.classList.add('translate-y-[-20px]','opacity-0'); setTimeout(() => toast.classList.add('hidden'), 300); }, 3000);
+    }
+
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const res = await fetch('/api/categories', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (res.ok) { closeAddModal(); showToast('Kategori berhasil ditambahkan'); setTimeout(() => location.reload(), 600); }
+        else showToast(data.error || 'Gagal', 'error');
+    });
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editCatID').value;
+        const fd = new FormData(e.target);
+        const res = await fetch('/api/categories/' + id, { method: 'PUT', body: fd });
+        const data = await res.json();
+        if (res.ok) { closeEditModal(); showToast('Berhasil diperbarui'); setTimeout(() => location.reload(), 600); }
+        else showToast(data.error || 'Gagal', 'error');
+    });
+
+    async function deleteCategory(id) {
+        if (!confirm('Hapus kategori ini?')) return;
+        const res = await fetch('/api/categories/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok) { showToast('Kategori dihapus'); setTimeout(() => location.reload(), 600); }
+        else showToast(data.error || 'Gagal', 'error');
+    }
+</script>
+</body>
+</html>
