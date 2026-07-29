@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Keuangan - FinTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #fff; color: #01381b; font-size: 13px; }
+
+        .page { max-width: 800px; margin: 0 auto; padding: 32px; }
+
+        /* Header */
+        .report-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #c3f545; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-icon { width: 44px; height: 44px; background: #01381b; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon svg { width: 24px; height: 24px; fill: #c3f545; }
+        .brand-name { font-size: 20px; font-weight: 800; color: #01381b; }
+        .brand-sub { font-size: 11px; color: #809b8d; font-weight: 500; margin-top: 2px; }
+        .report-meta { text-align: right; }
+        .report-title { font-size: 16px; font-weight: 700; color: #01381b; }
+        .report-period { font-size: 11px; color: #809b8d; margin-top: 4px; }
+        .report-generated { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+        /* Summary Cards */
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+        .summary-card { border-radius: 16px; padding: 16px; }
+        .summary-card.income { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .summary-card.expense { background: #fff1f2; border: 1px solid #fecdd3; }
+        .summary-card.balance { background: #f8faf7; border: 2px solid #c3f545; }
+        .summary-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+        .summary-card.income .summary-label { color: #16a34a; }
+        .summary-card.expense .summary-label { color: #dc2626; }
+        .summary-card.balance .summary-label { color: #809b8d; }
+        .summary-amount { font-size: 18px; font-weight: 800; }
+        .summary-card.income .summary-amount { color: #16a34a; }
+        .summary-card.expense .summary-amount { color: #dc2626; }
+        .summary-card.balance .summary-amount { color: #01381b; }
+        .summary-count { font-size: 10px; color: #aaa; margin-top: 4px; }
+
+        /* Section */
+        .section { margin-bottom: 28px; }
+        .section-title { font-size: 13px; font-weight: 700; color: #01381b; margin-bottom: 12px; display: flex; align-items: center; gap-8px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+        .section-title span { background: #c3f545; color: #01381b; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+
+        /* Category breakdown */
+        .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+        .category-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f8faf7; border-radius: 12px; }
+        .category-left { display: flex; align-items: center; gap: 10px; }
+        .category-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .category-name { font-size: 12px; font-weight: 600; color: #01381b; }
+        .category-pct { font-size: 10px; color: #809b8d; }
+        .category-amount { font-size: 12px; font-weight: 700; color: #01381b; }
+
+        /* Progress bar */
+        .progress-bar { height: 6px; background: #f1f5f9; border-radius: 99px; overflow: hidden; margin-top: 4px; }
+        .progress-fill { height: 100%; border-radius: 99px; }
+
+        /* Transaction table */
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: #01381b; color: white; }
+        thead th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; }
+        thead th:last-child { text-align: right; }
+        tbody tr { border-bottom: 1px solid #f1f5f9; }
+        tbody tr:nth-child(even) { background: #f8faf7; }
+        tbody td { padding: 9px 12px; font-size: 11px; color: #01381b; }
+        tbody td:last-child { text-align: right; font-weight: 700; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+        .badge-income { background: #f0fdf4; color: #16a34a; }
+        .badge-expense { background: #fff1f2; color: #dc2626; }
+        .amount-income { color: #16a34a; }
+        .amount-expense { color: #dc2626; }
+
+        /* Savings table */
+        .savings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 12px; margin-bottom: 6px; background: #f8faf7; }
+        .savings-info { flex: 1; }
+        .savings-name { font-size: 12px; font-weight: 700; color: #01381b; }
+        .savings-meta { font-size: 10px; color: #809b8d; margin-top: 2px; }
+        .savings-bar-wrap { flex: 1; margin: 0 16px; }
+        .savings-pct-label { font-size: 10px; color: #809b8d; margin-bottom: 4px; text-align: right; }
+        .savings-amounts { text-align: right; min-width: 120px; }
+        .savings-current { font-size: 13px; font-weight: 800; color: #01381b; }
+        .savings-target { font-size: 10px; color: #809b8d; }
+        .badge-done { background: #c3f545; color: #01381b; }
+
+        /* Footer */
+        .report-footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .footer-brand { font-size: 11px; font-weight: 700; color: #809b8d; }
+        .footer-page { font-size: 10px; color: #aaa; }
+
+        /* Print styles */
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .page { padding: 20px; }
+        }
+
+        /* Print button */
+        .print-bar { position: fixed; bottom: 24px; right: 24px; display: flex; gap: 12px; z-index: 100; }
+        .btn-print { background: #01381b; color: #c3f545; border: none; padding: 14px 28px; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(1,56,27,0.3); }
+        .btn-close { background: white; color: #01381b; border: 2px solid #e5e7eb; padding: 14px 20px; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body>
+    <!-- Print action bar -->
+    <div class="print-bar no-print">
+        <button class="btn-close" onclick="window.close()">✕ Tutup</button>
+        <button class="btn-print" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+    </div>
+
+    <div class="page">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93V18c0-.55-.45-1-1-1s-1 .45-1 1v1.93C7.06 19.44 4.56 16.94 4.07 14H6c.55 0 1-.45 1-1s-.45-1-1-1H4.07C4.56 8.06 7.06 5.56 10 5.07V7c0 .55.45 1 1 1s1-.45 1-1V5.07C16.94 5.56 19.44 8.06 19.93 11H18c-.55 0-1 .45-1 1s.45 1 1 1h1.93c-.49 2.94-2.99 5.44-5.93 5.93z"/></svg>
+                </div>
+                <div>
+                    <div class="brand-name">FinTrack</div>
+                    <div class="brand-sub">Laporan Keuangan Pribadi</div>
+                </div>
+            </div>
+            <div class="report-meta">
+                <div class="report-title">Laporan Keuangan</div>
+                <div class="report-period">Periode: {{ .Period }}</div>
+                <div class="report-generated">Dibuat: {{ .GeneratedAt }}</div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-grid">
+            <div class="summary-card income">
+                <div class="summary-label">Total Pemasukan</div>
+                <div class="summary-amount">Rp {{ .TotalIncome }}</div>
+                <div class="summary-count">{{ .IncomeCount }} transaksi</div>
+            </div>
+            <div class="summary-card expense">
+                <div class="summary-label">Total Pengeluaran</div>
+                <div class="summary-amount">Rp {{ .TotalExpense }}</div>
+                <div class="summary-count">{{ .ExpenseCount }} transaksi</div>
+            </div>
+            <div class="summary-card balance">
+                <div class="summary-label">{{ if .IsDeficit }}Defisit{{ else }}Surplus{{ end }}</div>
+                <div class="summary-amount">Rp {{ .NetBalance }}</div>
+                <div class="summary-count">Saldo bersih periode ini</div>
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        {{ if .ExpenseStats }}
+        <div class="section">
+            <div class="section-title">Rincian Pengeluaran per Kategori <span>{{ len .ExpenseStats }} kategori</span></div>
+            <div class="category-grid">
+                {{ range .ExpenseStats }}
+                <div class="category-item">
+                    <div class="category-left">
+                        <div class="category-dot" style="background: #dc2626"></div>
+                        <div>
+                            <div class="category-name">{{ .CategoryName }}</div>
+                            <div class="progress-bar" style="width:80px">
+                                <div class="progress-fill" style="width:{{ .Percentage }}%; background:#dc2626"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="category-amount">Rp {{ .FormattedAmount }}</div>
+                        <div class="category-pct">{{ .Percentage }}%</div>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        {{ end }}
+
+        <!-- Savings -->
+        {{ if .Savings }}
+        <div class="section">
+            <div class="section-title">Tabungan & Investasi <span>{{ len .Savings }} kantong</span></div>
+            {{ range .Savings }}
+            <div class="savings-row">
+                <div class="savings-info">
+                    <div class="savings-name">{{ .Name }}</div>
+                    <div class="savings-meta">{{ if .FormattedDeadline }}Deadline: {{ .FormattedDeadline }}{{ else }}Tanpa batas waktu{{ end }}</div>
+                </div>
+                <div class="savings-bar-wrap">
+                    <div class="savings-pct-label">{{ .Percentage }}%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:{{ .Percentage }}%; background:{{ .Color }}"></div>
+                    </div>
+                </div>
+                <div class="savings-amounts">
+                    <div class="savings-current">Rp {{ .FormattedCurrent }}</div>
+                    <div class="savings-target">dari Rp {{ .FormattedTarget }}</div>
+                    {{ if .IsCompleted }}<span class="badge badge-done">Tercapai</span>{{ end }}
+                </div>
+            </div>
+            {{ end }}
+        </div>
+        {{ end }}
+
+        <!-- Transactions -->
+        <div class="section">
+            <div class="section-title">Riwayat Transaksi <span>{{ len .Transactions }} transaksi</span></div>
+            {{ if .Transactions }}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Kategori</th>
+                        <th>Catatan</th>
+                        <th>Tipe</th>
+                        <th>Jumlah</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Transactions }}
+                    <tr>
+                        <td>{{ .FormattedDate }}</td>
+                        <td>{{ .Category }}</td>
+                        <td>{{ if .Note }}{{ .Note }}{{ else }}-{{ end }}</td>
+                        <td><span class="badge {{ if eq .Type "income" }}badge-income{{ else }}badge-expense{{ end }}">{{ if eq .Type "income" }}Masuk{{ else }}Keluar{{ end }}</span></td>
+                        <td class="{{ if eq .Type "income" }}amount-income{{ else }}amount-expense{{ end }}">{{ if eq .Type "income" }}+{{ else }}-{{ end }}Rp {{ .FormattedAmount }}</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+            {{ else }}
+            <p style="color:#809b8d; text-align:center; padding:20px 0">Tidak ada transaksi pada periode ini</p>
+            {{ end }}
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <div class="footer-brand">FinTrack — Laporan Keuangan Pribadi</div>
+            <div class="footer-page">{{ .GeneratedAt }}</div>
+        </div>
+    </div>
+
+    <script>
+        // Auto trigger print dialog if ?print=1
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('autoprint') === '1') {
+            window.onload = () => setTimeout(() => window.print(), 500);
+        }
+    </script>
+</body>
+</html>

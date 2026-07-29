@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>{{ .Savings.Name }} - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/static/dark-mode.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', limeDark: '#a3d124', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+        <!-- Header -->
+        <header class="pt-8 px-6 flex justify-between items-center mb-4">
+            <a href="/savings" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="ph ph-caret-left text-xl text-brand-dark"></i>
+            </a>
+            <h1 class="text-base font-bold text-brand-dark truncate mx-3 flex-1 text-center">{{ .Savings.Name }}</h1>
+            <button onclick="openEditModal()" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <i class="ph ph-pencil-simple text-xl text-brand-dark"></i>
+            </button>
+        </header>
+
+        <!-- Hero Card -->
+        <section class="px-6 mb-5">
+            <div class="rounded-3xl p-6 relative overflow-hidden shadow-lg" style="background: linear-gradient(135deg, {{ .Savings.Color }}dd, {{ .Savings.Color }}99)">
+                <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <i class="ph {{ .Savings.Icon }} text-3xl text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-bold text-base">{{ .Savings.Name }}</p>
+                            {{ if .Savings.Description }}
+                            <p class="text-white/70 text-xs mt-0.5">{{ .Savings.Description }}</p>
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    <p class="text-white/70 text-xs mb-1">Terkumpul</p>
+                    <h2 class="text-3xl font-extrabold text-white mb-1">Rp {{ .Savings.FormattedCurrent }}</h2>
+                    <p class="text-white/70 text-xs mb-4">dari target Rp {{ .Savings.FormattedTarget }}</p>
+
+                    <!-- Progress bar -->
+                    <div class="w-full bg-white/20 rounded-full h-3 mb-2">
+                        <div class="bg-white h-3 rounded-full transition-all duration-1000" style="width: {{ .Savings.Percentage }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-white/70">
+                        <span>{{ .Savings.Percentage }}% tercapai</span>
+                        <span>Sisa Rp {{ .Savings.FormattedSisa }}</span>
+                    </div>
+
+                    {{ if .Savings.FormattedDeadline }}
+                    <div class="mt-3 flex items-center gap-2">
+                        <i class="ph ph-calendar text-white/60 text-sm"></i>
+                        <span class="text-white/70 text-xs">Deadline: {{ .Savings.FormattedDeadline }}
+                            {{ if gt .Savings.DaysLeft 0 }}· <span class="text-white font-semibold">{{ .Savings.DaysLeft }} hari lagi</span>{{ end }}
+                        </span>
+                    </div>
+                    {{ end }}
+
+                    {{ if .Savings.IsCompleted }}
+                    <div class="mt-3 bg-white/20 rounded-xl px-3 py-2 flex items-center gap-2">
+                        <i class="ph ph-check-circle text-white text-lg"></i>
+                        <span class="text-white font-bold text-sm">🎉 Target Tercapai!</span>
+                    </div>
+                    {{ end }}
+                </div>
+            </div>
+        </section>
+
+        <!-- Monthly Suggestion -->
+        {{ if and .Savings.FormattedMonthly (not .Savings.IsCompleted) }}
+        <section class="px-6 mb-4">
+            <div class="bg-brand-lime/10 border border-brand-lime/40 rounded-2xl px-4 py-3 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-lime/30 flex items-center justify-center shrink-0">
+                    <i class="ph ph-lightbulb text-xl text-brand-dark"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-brand-dark">Saran Setoran Bulanan</p>
+                    <p class="text-base font-extrabold text-brand-dark">Rp {{ .Savings.FormattedMonthly }}<span class="text-xs font-semibold text-brand-muted">/bulan</span></p>
+                    <p class="text-[10px] text-brand-muted">Selama {{ .Savings.MonthsLeft }} bulan lagi untuk capai target</p>
+                </div>
+            </div>
+        </section>
+        {{ end }}
+
+        <!-- Action Buttons -->
+        <section class="px-6 mb-5">
+            <div class="flex gap-3">
+                <button onclick="openTxModal('deposit')" class="flex-1 bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-3.5 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph ph-arrow-up-right text-lg"></i> Setor
+                </button>
+                <button onclick="openTxModal('withdraw')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-brand-dark py-3.5 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph ph-arrow-down-left text-lg"></i> Tarik
+                </button>
+                <button onclick="confirmDelete()" class="w-12 h-12 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl flex items-center justify-center transition active:scale-95">
+                    <i class="ph ph-trash text-xl"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Transaction History -->
+        <section class="px-6 pb-8 flex-1 overflow-y-auto">
+            <h3 class="text-sm font-bold text-brand-dark mb-4">Riwayat Transaksi</h3>
+
+            {{ if .Transactions }}
+            <div class="flex flex-col gap-3">
+                {{ range .Transactions }}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl {{ if eq .Type "deposit" }}bg-brand-lime/20{{ else }}bg-red-50{{ end }} flex items-center justify-center">
+                            <i class="ph {{ if eq .Type "deposit" }}ph-arrow-up-right text-brand-dark{{ else }}ph-arrow-down-left text-red-500{{ end }} text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-brand-dark">{{ if eq .Type "deposit" }}Setoran{{ else }}Penarikan{{ end }}</p>
+                            <p class="text-[11px] text-brand-muted">{{ .FormattedDate }}{{ if .Note }} · {{ .Note }}{{ end }}</p>
+                        </div>
+                    </div>
+                    <p class="text-sm font-bold {{ if eq .Type "deposit" }}text-brand-dark{{ else }}text-red-500{{ end }}">
+                        {{ if eq .Type "deposit" }}+{{ else }}-{{ end }}Rp {{ .FormattedAmount }}
+                    </p>
+                </div>
+                {{ end }}
+            </div>
+            {{ else }}
+            <div class="text-center py-8">
+                <i class="ph ph-clock-counter-clockwise text-4xl text-gray-200 mb-3"></i>
+                <p class="text-sm text-brand-muted">Belum ada transaksi</p>
+            </div>
+            {{ end }}
+        </section>
+    </main>
+
+    <!-- Deposit/Withdraw Modal -->
+    <div id="txBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeTxModal()"></div>
+    <div id="txModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 id="txModalTitle" class="text-xl font-bold text-brand-dark mb-5 text-center">Setor Dana</h2>
+
+        <form id="txForm" class="flex flex-col gap-4 pb-4">
+            <input type="hidden" id="txType" name="type" value="deposit">
+
+            <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold text-xl">Rp</span>
+                <input type="number" name="amount" id="txAmount" placeholder="0" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-3xl font-bold rounded-2xl pl-14 pr-4 py-5 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-300">
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-note text-brand-dark"></i>
+                </div>
+                <input type="text" name="note" placeholder="Catatan (opsional)"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+            </div>
+
+            <button type="submit" id="btnTxSubmit" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-base transition active:scale-95">
+                Konfirmasi Setoran
+            </button>
+        </form>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div id="editModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Edit Tabungan</h2>
+
+        <form id="editForm" class="flex flex-col gap-4 pb-4">
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-pencil-simple text-brand-dark"></i>
+                </div>
+                <input type="text" name="name" value="{{ .Savings.Name }}" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <input type="hidden" name="type" value="{{ .Savings.Type }}">
+            <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold">Rp</span>
+                <input type="number" name="target_amount" value="{{ .Savings.TargetAmount }}" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-2xl font-bold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime">
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-calendar text-brand-dark"></i>
+                </div>
+                <input type="date" name="deadline" value="{{ .Savings.Deadline }}"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
+            </div>
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-note text-brand-dark"></i>
+                </div>
+                <input type="text" name="description" value="{{ .Savings.Description }}" placeholder="Deskripsi"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm placeholder-gray-400">
+            </div>
+            <button type="submit" class="w-full bg-brand-dark text-white py-4 rounded-2xl font-bold text-base transition active:scale-95">
+                Simpan Perubahan
+            </button>
+        </form>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        const SAVINGS_ID = {{ .Savings.ID }};
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            msg.textContent = message;
+            if (type === 'success') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            } else {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        function openTxModal(type) {
+            document.getElementById('txType').value = type;
+            document.getElementById('txModalTitle').textContent = type === 'deposit' ? 'Setor Dana' : 'Tarik Dana';
+            document.getElementById('btnTxSubmit').textContent = type === 'deposit' ? 'Konfirmasi Setoran' : 'Konfirmasi Penarikan';
+            document.getElementById('txAmount').value = '';
+
+            const backdrop = document.getElementById('txBackdrop');
+            const modal = document.getElementById('txModal');
+            backdrop.classList.remove('hidden');
+            setTimeout(() => { backdrop.classList.remove('opacity-0'); modal.classList.remove('translate-y-full'); }, 10);
+        }
+
+        function closeTxModal() {
+            document.getElementById('txBackdrop').classList.add('opacity-0');
+            document.getElementById('txModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('txBackdrop').classList.add('hidden'), 300);
+        }
+
+        function openEditModal() {
+            const backdrop = document.getElementById('editBackdrop');
+            const modal = document.getElementById('editModal');
+            backdrop.classList.remove('hidden');
+            setTimeout(() => { backdrop.classList.remove('opacity-0'); modal.classList.remove('translate-y-full'); }, 10);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editBackdrop').classList.add('opacity-0');
+            document.getElementById('editModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('editBackdrop').classList.add('hidden'), 300);
+        }
+
+        async function confirmDelete() {
+            if (!confirm('Yakin ingin menghapus tabungan ini? Semua riwayat akan dihapus.')) return;
+            try {
+                const res = await fetch(`/api/savings/${SAVINGS_ID}`, { method: 'DELETE' });
+                if (res.ok) {
+                    window.location.href = '/savings';
+                } else {
+                    showToast('Gagal menghapus', 'error');
+                }
+            } catch (e) {
+                showToast('Gagal menghapus', 'error');
+            }
+        }
+
+        document.getElementById('txForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnTxSubmit');
+            const origText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i>';
+
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch(`/api/savings/${SAVINGS_ID}/transaction`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    closeTxModal();
+                    showToast(data.message);
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Terjadi kesalahan', 'error');
+                    btn.disabled = false;
+                    btn.textContent = origText;
+                }
+            } catch (err) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+                btn.textContent = origText;
+            }
+        });
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch(`/api/savings/${SAVINGS_ID}`, { method: 'PUT', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    closeEditModal();
+                    showToast('Berhasil diperbarui');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Gagal memperbarui', 'error');
+                }
+            } catch (err) {
+                showToast('Terjadi kesalahan', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

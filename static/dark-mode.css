@@ -1,0 +1,83 @@
+/* Dark mode styles for FinTrack */
+
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f1f5f9;
+    --bg-card: #ffffff;
+    --text-primary: #01381b;
+    --text-secondary: #809b8d;
+    --border-color: #e5e7eb;
+}
+
+.dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+}
+
+.dark body {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.dark main {
+    background-color: var(--bg-card);
+}
+
+.dark .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+.dark .bg-gray-50 {
+    background-color: #334155 !important;
+}
+
+.dark .bg-gray-100 {
+    background-color: #475569 !important;
+}
+
+.dark .text-brand-dark {
+    color: var(--text-primary) !important;
+}
+
+.dark .text-brand-muted {
+    color: var(--text-secondary) !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200 {
+    border-color: var(--border-color) !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: #334155 !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark input::placeholder {
+    color: var(--text-secondary) !important;
+}
+
+/* Keep brand colors in dark mode */
+.dark .bg-brand-lime,
+.dark .bg-brand-dark,
+.dark .text-brand-lime {
+    /* These should remain as defined */
+}
+
+/* Cards in dark mode */
+.dark .shadow-lg,
+.dark .shadow-2xl {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Navigation in dark mode */
+.dark nav {
+    background-color: #0f172a !important;
+}

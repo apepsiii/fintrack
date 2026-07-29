@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil - FinTrack</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+    </style>
+</head>
+<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+        
+        <header class="pt-8 px-6 pb-4">
+            <h1 class="text-xl font-bold text-brand-dark tracking-tight mb-6">Profil Saya</h1>
+            
+            <div class="bg-brand-dark rounded-3xl p-5 flex items-center gap-4 relative overflow-hidden shadow-lg">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+                
+                <img src="https://ui-avatars.com/api/?name=ST+Racson&background=c3f545&color=01381b&rounded=true&bold=true" alt="Profile" class="w-16 h-16 rounded-full border-2 border-brand-lime relative z-10">
+                <div class="relative z-10">
+                    <h2 class="text-lg font-bold text-white">{{ .User.Name }}</h2>
+                    <p class="text-sm text-white/60 font-medium">{{ .User.Email }}</p>
+                    <div class="inline-block mt-2 bg-white/10 px-2 py-1 rounded text-[10px] text-brand-lime font-medium">
+                        {{ .User.JoinDate }}
+                    </div>
+                </div>
+                <button class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition z-10">
+                    <i class="ph ph-pencil-simple text-sm"></i>
+                </button>
+            </div>
+        </header>
+
+        <section class="px-6 pb-28 flex-1 overflow-y-auto">
+            
+            <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-4">Pengaturan Akun</h3>
+            <div class="bg-gray-50 rounded-2xl p-2 mb-6 border border-gray-100">
+                <button class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-user text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Data Pribadi</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </button>
+                <button class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-bell text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Notifikasi</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </button>
+            </div>
+
+            <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Aplikasi</h3>
+            <div class="bg-gray-50 rounded-2xl p-2 mb-6 border border-gray-100">
+                <button class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-dark text-brand-lime flex items-center justify-center"><i class="ph ph-moon text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Mode Gelap</span>
+                    </div>
+                    <div class="w-10 h-6 bg-gray-200 rounded-full relative"><div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 shadow-sm"></div></div>
+                </button>
+                <button class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-download-simple text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Ekspor Data (CSV)</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </button>
+            </div>
+
+            <button class="w-full flex items-center justify-center gap-2 p-4 mt-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl transition font-bold text-sm">
+                <i class="ph ph-sign-out text-lg"></i> Keluar
+            </button>
+        </section>
+
+        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+            <div class="flex justify-between items-center relative">
+                <a href="/" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-house text-2xl"></i>
+                    <span class="text-[9px] font-medium opacity-80">Beranda</span>
+                </a>
+                
+                <a href="/stats" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-chart-bar text-2xl"></i>
+                    <span class="text-[9px] font-medium">Statistik</span>
+                </a>
+                
+                <div class="relative -top-6 flex justify-center w-16">
+                    <button class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                        <i class="ph ph-plus text-2xl font-bold"></i>
+                    </button>
+                </div>
+
+                <a href="/targets" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-target text-2xl"></i>
+                    <span class="text-[9px] font-medium">Target</span>
+                </a>
+                
+                <a href="/profile" class="flex flex-col items-center gap-1.5 w-12 text-white">
+                    <i class="ph-fill ph-user text-2xl"></i>
+                    <span class="text-[9px] font-medium">Profil</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+</body>
+</html>

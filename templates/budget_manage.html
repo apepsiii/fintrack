@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kelola anggaran bulanan FinTrack">
+    <meta name="theme-color" content="#c3f545">
+    <title>Kelola Anggaran - FinTrack</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <link rel="stylesheet" href="/static/dark-mode.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', limeDark: '#a3d124', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+    </style>
+</head>
+<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+        
+        <header class="pt-8 px-6 flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <a href="/targets" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <i class="ph ph-caret-left text-xl text-brand-dark"></i>
+                </a>
+                <h1 class="text-xl font-bold text-brand-dark tracking-tight">Kelola Anggaran</h1>
+            </div>
+            <button onclick="openAddBudgetModal()" class="w-10 h-10 rounded-full bg-brand-lime/20 flex items-center justify-center transition active:scale-95 text-brand-dark">
+                <i class="ph ph-plus text-xl font-bold"></i>
+            </button>
+        </header>
+
+        <section class="px-6 pb-28 flex-1 overflow-y-auto" id="budgetList">
+            <!-- Budget list will be loaded here -->
+            <div class="text-center py-12">
+                <div class="animate-spin w-8 h-8 border-4 border-brand-lime border-t-transparent rounded-full mx-auto"></div>
+                <p class="text-sm text-brand-muted mt-4">Memuat anggaran...</p>
+            </div>
+        </section>
+
+        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+            <div class="flex justify-between items-center relative">
+                <a href="/" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-house text-2xl"></i>
+                    <span class="text-[9px] font-medium opacity-80">Beranda</span>
+                </a>
+                
+                <a href="/stats" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-chart-bar text-2xl"></i>
+                    <span class="text-[9px] font-medium">Statistik</span>
+                </a>
+                
+                <div class="relative -top-6 flex justify-center w-16">
+                    <button class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                        <i class="ph ph-plus text-2xl font-bold"></i>
+                    </button>
+                </div>
+
+                <a href="/targets" class="flex flex-col items-center gap-1.5 w-12 text-white">
+                    <i class="ph-fill ph-target text-2xl"></i>
+                    <span class="text-[9px] font-medium">Target</span>
+                </a>
+                
+                <a href="/profile" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-user text-2xl"></i>
+                    <span class="text-[9px] font-medium">Profil</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+
+    <!-- Add/Edit Budget Modal -->
+    <div id="budgetModalBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeBudgetModal()"></div>
+    
+    <div id="budgetModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-6 text-center" id="modalTitle">Tambah Anggaran</h2>
+        
+        <form id="budgetForm" class="flex flex-col gap-5 pb-4">
+            <input type="hidden" id="budgetId" name="budget_id">
+            
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-tag text-brand-dark"></i>
+                </div>
+                <select id="categorySelect" name="category_id" required class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-10 py-4 focus:outline-none focus:border-brand-lime appearance-none">
+                    <option value="">Pilih Kategori</option>
+                </select>
+                <i class="ph ph-caret-down absolute right-5 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none"></i>
+            </div>
+
+            <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold text-xl">Rp</span>
+                <input type="number" id="amountLimit" name="amount_limit" placeholder="0" required 
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-3xl font-bold rounded-2xl pl-14 pr-4 py-5 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-300">
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-calendar text-brand-dark"></i>
+                </div>
+                <input type="month" id="monthYear" name="month_year" required
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime">
+            </div>
+            
+            <div class="flex gap-3 mt-2">
+                <button type="button" onclick="closeBudgetModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-brand-dark py-4 rounded-2xl font-bold text-base transition">
+                    Batal
+                </button>
+                <button type="submit" class="flex-1 bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-base transition">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let categories = [];
+
+        // Load categories
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                categories = await response.json();
+                
+                const select = document.getElementById('categorySelect');
+                select.innerHTML = '<option value="">Pilih Kategori</option>';
+                
+                categories.filter(c => c.type === 'expense').forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load categories:', error);
+            }
+        }
+
+        // Load budgets
+        async function loadBudgets() {
+            const container = document.getElementById('budgetList');
+            
+            try {
+                const response = await fetch('/api/budgets');
+                const budgets = await response.json();
+                
+                if (budgets.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="ph ph-target text-4xl text-brand-muted"></i>
+                            </div>
+                            <p class="text-brand-dark font-medium mb-2">Belum ada anggaran</p>
+                            <p class="text-sm text-brand-muted mb-4">Mulai kelola keuanganmu dengan mengatur anggaran bulanan</p>
+                            <button onclick="openAddBudgetModal()" class="bg-brand-lime hover:bg-brand-limeDark text-brand-dark px-6 py-3 rounded-xl font-bold text-sm transition">
+                                <i class="ph ph-plus"></i> Tambah Anggaran
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = budgets.map(budget => `
+                    <div class="bg-white border border-gray-100 rounded-2xl p-4 mb-4 hover:shadow-lg transition">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-brand-lime/20 flex items-center justify-center">
+                                    <i class="ph ${budget.icon} text-xl text-brand-dark"></i>
+                                </div>
+                                <div>
+                                    <span class="text-base font-bold text-brand-dark block">${budget.category_name}</span>
+                                    <span class="text-xs text-brand-muted">${budget.month_year}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editBudget(${budget.id})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition">
+                                    <i class="ph ph-pencil-simple text-sm"></i>
+                                </button>
+                                <button onclick="deleteBudget(${budget.id})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition">
+                                    <i class="ph ph-trash text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right mb-2">
+                            <p class="text-xl font-bold text-brand-dark">Rp ${formatRupiah(budget.amount_limit)}</p>
+                            <p class="text-xs text-brand-muted">Batas anggaran bulanan</p>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load budgets:', error);
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-red-500">Gagal memuat data anggaran</p>
+                    </div>
+                `;
+            }
+        }
+
+        function formatRupiah(amount) {
+            return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function openAddBudgetModal() {
+            document.getElementById('modalTitle').textContent = 'Tambah Anggaran';
+            document.getElementById('budgetForm').reset();
+            document.getElementById('budgetId').value = '';
+            document.getElementById('monthYear').value = new Date().toISOString().slice(0, 7);
+            
+            const backdrop = document.getElementById('budgetModalBackdrop');
+            const modal = document.getElementById('budgetModal');
+            
+            backdrop.classList.remove('hidden');
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                modal.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeBudgetModal() {
+            const backdrop = document.getElementById('budgetModalBackdrop');
+            const modal = document.getElementById('budgetModal');
+            
+            backdrop.classList.add('opacity-0');
+            modal.classList.add('translate-y-full');
+            
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+            }, 300);
+        }
+
+        async function editBudget(id) {
+            try {
+                const response = await fetch(`/api/budget/${id}`);
+                const budget = await response.json();
+                
+                document.getElementById('modalTitle').textContent = 'Edit Anggaran';
+                document.getElementById('budgetId').value = budget.id;
+                document.getElementById('categorySelect').value = budget.category_id;
+                document.getElementById('amountLimit').value = budget.amount_limit;
+                document.getElementById('monthYear').value = budget.month_year;
+                
+                openAddBudgetModal();
+            } catch (error) {
+                console.error('Failed to load budget:', error);
+                alert('Gagal memuat data anggaran');
+            }
+        }
+
+        async function deleteBudget(id) {
+            if (!confirm('Yakin ingin menghapus anggaran ini?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/budget/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadBudgets();
+                } else {
+                    alert('Gagal menghapus anggaran');
+                }
+            } catch (error) {
+                console.error('Failed to delete budget:', error);
+                alert('Gagal menghapus anggaran');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('budgetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const budgetId = document.getElementById('budgetId').value;
+            
+            const url = budgetId ? `/api/budget/${budgetId}` : '/api/budget';
+            const method = budgetId ? 'PUT' : 'POST';
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    closeBudgetModal();
+                    loadBudgets();
+                } else {
+                    alert('Gagal menyimpan anggaran');
+                }
+            } catch (error) {
+                console.error('Failed to save budget:', error);
+                alert('Gagal menyimpan anggaran');
+            }
+        });
+
+        // Initialize
+        loadCategories();
+        loadBudgets();
+    </script>
+</body>
+</html>

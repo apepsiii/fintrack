@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Profil pengguna FinTrack">
+    <meta name="theme-color" content="#c3f545">
+    <title>Profil - FinTrack</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+    </style>
+</head>
+<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+        
+        <header class="pt-8 px-6 pb-4">
+            <h1 class="text-xl font-bold text-brand-dark tracking-tight mb-6">Profil Saya</h1>
+            
+            <div class="bg-brand-dark rounded-3xl p-5 flex items-center gap-4 relative overflow-hidden shadow-lg">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+                
+                <img src="https://ui-avatars.com/api/?name=ST+Racson&background=c3f545&color=01381b&rounded=true&bold=true" alt="Profile" class="w-16 h-16 rounded-full border-2 border-brand-lime relative z-10">
+                <div class="relative z-10">
+                    <h2 class="text-lg font-bold text-white">{{ .User.Name }}</h2>
+                    <p class="text-sm text-white/60 font-medium">{{ .User.Email }}</p>
+                    <div class="inline-block mt-2 bg-white/10 px-2 py-1 rounded text-[10px] text-brand-lime font-medium">
+                        {{ .User.JoinDate }}
+                    </div>
+                </div>
+                <button class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition z-10">
+                    <i class="ph ph-pencil-simple text-sm"></i>
+                </button>
+            </div>
+        </header>
+
+        <section class="px-6 pb-28 flex-1 overflow-y-auto">
+            
+            <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-4">Pengaturan Akun</h3>
+            <div class="bg-gray-50 rounded-2xl p-2 mb-6 border border-gray-100">
+                <button onclick="openEditProfile()" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-user text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Data Pribadi</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </button>
+                <button class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-bell text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Notifikasi</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </button>
+            </div>
+
+            <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Aplikasi</h3>
+            <div class="bg-gray-50 rounded-2xl p-2 mb-6 border border-gray-100">
+                <button id="darkModeToggle" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-dark text-brand-lime flex items-center justify-center"><i class="ph ph-moon text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Mode Gelap</span>
+                    </div>
+                    <div id="darkModeSwitch" class="w-10 h-6 bg-gray-200 rounded-full relative cursor-pointer transition-colors">
+                        <div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 shadow-sm transition-transform"></div>
+                    </div>
+                </button>
+                <button onclick="openExportModal()" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center text-brand-dark"><i class="ph ph-download-simple text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Ekspor Data</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </button>
+            </div>
+
+            <form action="/logout" method="POST">
+                <button type="submit" class="w-full flex items-center justify-center gap-2 p-4 mt-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl transition font-bold text-sm">
+                    <i class="ph ph-sign-out text-lg"></i> Keluar
+                </button>
+            </form>
+        </section>
+
+        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+            <div class="flex justify-between items-center relative">
+                <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-house text-2xl"></i>
+                    <span class="text-[9px] font-medium opacity-80">Beranda</span>
+                </a>
+                <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-chart-bar text-2xl"></i>
+                    <span class="text-[9px] font-medium">Statistik</span>
+                </a>
+                <div class="relative -top-6 flex justify-center w-14">
+                    <button class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                        <i class="ph ph-plus text-2xl font-bold"></i>
+                    </button>
+                </div>
+                <a href="/savings" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-piggy-bank text-2xl"></i>
+                    <span class="text-[9px] font-medium">Tabungan</span>
+                </a>
+                <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white">
+                    <i class="ph-fill ph-user text-2xl"></i>
+                    <span class="text-[9px] font-medium">Profil</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeEditProfile()"></div>
+    <div id="editProfileModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[92vh]">
+        <div class="p-6 pb-8">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <h2 class="text-xl font-bold text-brand-dark mb-5 text-center">Edit Data Pribadi</h2>
+            <form id="editProfileForm" class="flex flex-col gap-4">
+                <div class="relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                        <i class="ph ph-user text-brand-dark"></i>
+                    </div>
+                    <input type="text" name="name" id="editName" placeholder="Nama lengkap" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+                </div>
+                <div class="relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                        <i class="ph ph-envelope text-brand-dark"></i>
+                    </div>
+                    <input type="email" name="email" id="editEmail" placeholder="Email" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+                </div>
+                <div class="border-t border-gray-100 pt-4">
+                    <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Ganti Password (opsional)</p>
+                    <div class="flex flex-col gap-3">
+                        <div class="relative">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                                <i class="ph ph-lock-key text-brand-dark"></i>
+                            </div>
+                            <input type="password" name="new_password" placeholder="Password baru (kosongkan jika tidak ganti)"
+                                class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-gray-100 pt-4">
+                    <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Konfirmasi Perubahan</p>
+                    <div class="relative">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center pointer-events-none">
+                            <i class="ph ph-shield-check text-brand-dark"></i>
+                        </div>
+                        <input type="password" name="current_password" placeholder="Password saat ini" required
+                            class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+                    </div>
+                </div>
+                <button type="submit" id="btnSaveProfile" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-base transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph ph-check text-lg"></i> Simpan Perubahan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModalBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeExportModal()"></div>
+    
+    <div id="exportModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[92vh]">
+        <div class="p-6 pb-8">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <h2 class="text-xl font-bold text-brand-dark mb-1 text-center">Ekspor & Impor Data</h2>
+            <p class="text-xs text-brand-muted text-center mb-6">Kelola & backup data keuangan kamu</p>
+
+            <!-- Date Range -->
+            <div class="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
+                <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Periode Laporan</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-semibold text-brand-muted mb-1 block">Dari</label>
+                        <input type="date" id="exportStart" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-brand-dark focus:outline-none focus:border-brand-lime">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-semibold text-brand-muted mb-1 block">Sampai</label>
+                        <input type="date" id="exportEnd" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-brand-dark focus:outline-none focus:border-brand-lime">
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="setRange('month')" class="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-white border border-gray-200 text-brand-dark hover:border-brand-lime transition">Bulan Ini</button>
+                    <button onclick="setRange('quarter')" class="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-white border border-gray-200 text-brand-dark hover:border-brand-lime transition">3 Bulan</button>
+                    <button onclick="setRange('year')" class="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-white border border-gray-200 text-brand-dark hover:border-brand-lime transition">Tahun Ini</button>
+                </div>
+            </div>
+
+            <!-- PDF Report -->
+            <div class="mb-3">
+                <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-2">Laporan PDF</p>
+                <button onclick="exportPDF()" class="w-full flex items-center gap-4 p-4 bg-brand-dark hover:bg-[#024a24] rounded-2xl transition active:scale-95">
+                    <div class="w-12 h-12 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0">
+                        <i class="ph ph-file-pdf text-2xl text-brand-lime"></i>
+                    </div>
+                    <div class="flex-1 text-left">
+                        <p class="text-sm font-bold text-white">Laporan Lengkap PDF</p>
+                        <p class="text-[10px] text-white/50 mt-0.5">Transaksi + Tabungan + Ringkasan kategori</p>
+                    </div>
+                    <i class="ph ph-arrow-square-out text-white/50 text-lg"></i>
+                </button>
+            </div>
+
+            <!-- CSV Exports -->
+            <div class="mb-3">
+                <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-2">Ekspor CSV</p>
+                <div class="flex flex-col gap-2">
+                    <button onclick="exportCSV('transactions')" class="flex items-center gap-3 p-3.5 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition active:scale-95">
+                        <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-receipt text-lg text-green-600"></i>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <p class="text-sm font-bold text-brand-dark">Transaksi</p>
+                            <p class="text-[10px] text-brand-muted">Semua pemasukan & pengeluaran</p>
+                        </div>
+                        <i class="ph ph-download-simple text-brand-muted text-lg"></i>
+                    </button>
+                    <button onclick="exportCSV('budget')" class="flex items-center gap-3 p-3.5 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition active:scale-95">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-chart-pie-slice text-lg text-blue-600"></i>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <p class="text-sm font-bold text-brand-dark">Anggaran Bulan Ini</p>
+                            <p class="text-[10px] text-brand-muted">Limit vs realisasi per kategori</p>
+                        </div>
+                        <i class="ph ph-download-simple text-brand-muted text-lg"></i>
+                    </button>
+                    <button onclick="exportCSV('summary')" class="flex items-center gap-3 p-3.5 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition active:scale-95">
+                        <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-stack text-lg text-purple-600"></i>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <p class="text-sm font-bold text-brand-dark">Ringkasan Keuangan</p>
+                            <p class="text-[10px] text-brand-muted">Total + breakdown per kategori</p>
+                        </div>
+                        <i class="ph ph-download-simple text-brand-muted text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Backup & Import -->
+            <div class="mb-4">
+                <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-2">Backup & Migrasi</p>
+                <div class="flex flex-col gap-2">
+                    <button onclick="exportBackup()" class="flex items-center gap-3 p-3.5 bg-brand-lime/10 border border-brand-lime/30 rounded-2xl hover:bg-brand-lime/20 transition active:scale-95">
+                        <div class="w-9 h-9 rounded-xl bg-brand-lime/30 flex items-center justify-center shrink-0">
+                            <i class="ph ph-cloud-arrow-down text-lg text-brand-dark"></i>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <p class="text-sm font-bold text-brand-dark">Download Backup (JSON)</p>
+                            <p class="text-[10px] text-brand-muted">Semua data: transaksi, tabungan, anggaran</p>
+                        </div>
+                        <i class="ph ph-download-simple text-brand-dark text-lg"></i>
+                    </button>
+                    <label class="flex items-center gap-3 p-3.5 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl hover:border-brand-lime transition cursor-pointer active:scale-95" id="importLabel">
+                        <div class="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-cloud-arrow-up text-lg text-orange-500"></i>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <p class="text-sm font-bold text-brand-dark" id="importLabelText">Import Backup (JSON)</p>
+                            <p class="text-[10px] text-brand-muted">Pulihkan dari file backup .json</p>
+                        </div>
+                        <i class="ph ph-upload-simple text-brand-muted text-lg"></i>
+                        <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="handleImport(this)">
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="closeExportModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-brand-dark py-3.5 rounded-2xl font-bold text-sm transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Import Result Modal -->
+    <div id="importResultBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[80] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
+    <div id="importResultModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[90] translate-y-full transition-transform duration-300 shadow-2xl">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <div id="importResultContent" class="pb-4"></div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode toggle
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+                updateDarkModeSwitch(true);
+            }
+        }
+
+        function updateDarkModeSwitch(isDark) {
+            const switchEl = document.getElementById('darkModeSwitch');
+            const toggleDiv = switchEl.querySelector('div');
+            if (isDark) {
+                switchEl.classList.add('bg-brand-lime');
+                switchEl.classList.remove('bg-gray-200');
+                toggleDiv.classList.add('translate-x-4');
+            } else {
+                switchEl.classList.remove('bg-brand-lime');
+                switchEl.classList.add('bg-gray-200');
+                toggleDiv.classList.remove('translate-x-4');
+            }
+        }
+
+        document.getElementById('darkModeToggle').addEventListener('click', function() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark);
+            updateDarkModeSwitch(isDark);
+        });
+
+        initDarkMode();
+
+        function openEditProfile() {
+            document.getElementById('editName').value = '{{ .User.Name }}';
+            document.getElementById('editEmail').value = '{{ .User.Email }}';
+            document.getElementById('editProfileBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('editProfileBackdrop').classList.remove('opacity-0');
+                document.getElementById('editProfileModal').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeEditProfile() {
+            document.getElementById('editProfileBackdrop').classList.add('opacity-0');
+            document.getElementById('editProfileModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('editProfileBackdrop').classList.add('hidden'), 300);
+        }
+
+        document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveProfile');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>';
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch('/api/profile', { method: 'PUT', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    closeEditProfile();
+                    showToast('Profil berhasil diperbarui');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Gagal memperbarui', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph ph-check text-lg"></i> Simpan Perubahan';
+                }
+            } catch (err) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-check text-lg"></i> Simpan Perubahan';
+            }
+        });
+
+        function openExportModal() {
+            const now = new Date();
+            const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+            document.getElementById('exportStart').value = `${y}-${m}-01`;
+            document.getElementById('exportEnd').value = now.toISOString().slice(0,10);
+            document.getElementById('exportModalBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('exportModalBackdrop').classList.remove('opacity-0');
+                document.getElementById('exportModal').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModalBackdrop').classList.add('opacity-0');
+            document.getElementById('exportModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('exportModalBackdrop').classList.add('hidden'), 300);
+        }
+
+        function setRange(range) {
+            const now = new Date();
+            const end = now.toISOString().slice(0,10);
+            let start;
+            if (range === 'month') {
+                start = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+            } else if (range === 'quarter') {
+                const d = new Date(now); d.setMonth(d.getMonth()-3);
+                start = d.toISOString().slice(0,10);
+            } else {
+                start = `${now.getFullYear()}-01-01`;
+            }
+            document.getElementById('exportStart').value = start;
+            document.getElementById('exportEnd').value = end;
+        }
+
+        function getRange() {
+            return {
+                start: document.getElementById('exportStart').value,
+                end: document.getElementById('exportEnd').value
+            };
+        }
+
+        function exportPDF() {
+            const { start, end } = getRange();
+            window.open(`/export/pdf?start=${start}&end=${end}`, '_blank');
+        }
+
+        function exportCSV(type) {
+            const { start, end } = getRange();
+            const now = new Date();
+            const month = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            if (type === 'transactions') {
+                window.location.href = `/export/transactions/csv?start=${start}&end=${end}`;
+            } else if (type === 'budget') {
+                window.location.href = `/export/budget/csv?month=${month}`;
+            } else if (type === 'summary') {
+                window.location.href = `/export/summary/csv?start=${start}&end=${end}`;
+            }
+        }
+
+        function exportBackup() {
+            window.location.href = '/export/backup';
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMessage').textContent = message;
+            if (type === 'success') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            } else {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        async function handleImport(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            document.getElementById('importLabelText').textContent = file.name;
+
+            const formData = new FormData();
+            formData.append('backup_file', file);
+
+            try {
+                const res = await fetch('/import/backup', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    showImportResult(data);
+                } else {
+                    showToast(data.error || 'Import gagal', 'error');
+                }
+            } catch (e) {
+                showToast('Terjadi kesalahan saat import', 'error');
+            }
+            input.value = '';
+            document.getElementById('importLabelText').textContent = 'Import Backup (JSON)';
+        }
+
+        function showImportResult(data) {
+            document.getElementById('importResultContent').innerHTML = `
+                <div class="flex flex-col items-center mb-6">
+                    <div class="w-16 h-16 rounded-full bg-brand-lime/20 flex items-center justify-center mb-3">
+                        <i class="ph ph-check-circle text-3xl text-brand-dark"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-brand-dark">Import Berhasil!</h3>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-4 flex flex-col gap-3 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-brand-muted">Transaksi diimpor</span>
+                        <span class="text-sm font-bold text-brand-dark">${data.tx_imported} data</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-brand-muted">Tabungan diimpor</span>
+                        <span class="text-sm font-bold text-brand-dark">${data.savings_imported} data</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-brand-muted">Anggaran diimpor</span>
+                        <span class="text-sm font-bold text-brand-dark">${data.budget_imported} data</span>
+                    </div>
+                </div>
+                <button onclick="closeImportResult()" class="w-full bg-brand-lime text-brand-dark py-4 rounded-2xl font-bold text-sm transition active:scale-95">
+                    Selesai
+                </button>
+            `;
+            document.getElementById('importResultBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('importResultBackdrop').classList.remove('opacity-0');
+                document.getElementById('importResultModal').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeImportResult() {
+            document.getElementById('importResultBackdrop').classList.add('opacity-0');
+            document.getElementById('importResultModal').classList.add('translate-y-full');
+            setTimeout(() => {
+                document.getElementById('importResultBackdrop').classList.add('hidden');
+                window.location.reload();
+            }, 300);
+        }
+    </script>
+</body>
+</html>

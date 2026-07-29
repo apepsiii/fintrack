@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FinTrack - Dashboard keuangan pribadi">
+    <meta name="theme-color" content="#c3f545">
+    <title>FinTrack Dashboard</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FinTrack">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Dark mode CSS -->
+    <link rel="stylesheet" href="/static/dark-mode.css">
+    
+    <!-- Offline mode -->
+    <script src="/static/offline.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            lime: '#c3f545', 
+                            limeDark: '#a3d124',
+                            dark: '#01381b', 
+                            light: '#f8faf7', 
+                            muted: '#809b8d'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: flex; }
+        .htmx-request.htmx-indicator { display: flex; }
+    </style>
+</head>
+<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+        
+        <header class="pt-8 px-6 flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=ST+Racson&background=f1f5f9&color=01381b&rounded=true" alt="Profile" class="w-10 h-10 rounded-full border border-gray-100">
+                <h1 class="text-lg font-bold text-brand-dark tracking-tight">ST Racson</h1>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-brand-lime/30 flex items-center justify-center relative transition active:scale-95">
+                <i class="ph ph-bell text-xl text-brand-dark font-bold"></i>
+                <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            </button>
+        </header>
+
+        <section class="px-6 mb-6">
+            <div class="bg-gradient-to-br from-[#aed835] to-[#c3f545] p-6 rounded-3xl shadow-lg shadow-brand-lime/40 relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                <div class="relative z-10 flex flex-col gap-1">
+                    <div class="flex items-center gap-2 text-brand-dark/70">
+                        <i class="ph ph-wallet"></i>
+                        <p class="text-sm font-medium">Saldo Tersedia</p>
+                    </div>
+                    <h2 class="text-[32px] font-extrabold text-brand-dark tracking-tight">Rp {{ .Balance }}</h2>
+                    
+                    <div class="flex justify-between items-end mt-4">
+                        <div>
+                            <p class="text-xs text-brand-dark/60 font-medium">Pengeluaran Bulan Ini</p>
+                            <p class="text-sm text-brand-dark font-bold mt-0.5">Rp {{ .MonthlyExpense }}</p>
+
+                        </div>
+                        <button class="bg-white/30 hover:bg-white/40 transition backdrop-blur-sm text-brand-dark text-xs font-semibold px-4 py-2 rounded-full flex items-center gap-1">
+                            <i class="ph ph-target font-bold"></i> Set Anggaran
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="px-6 mb-6">
+            <div class="flex justify-between items-center px-2">
+                <button class="flex flex-col items-center gap-2 group"><div class="w-14 h-14 rounded-2xl bg-brand-lime/20 flex items-center justify-center"><i class="ph ph-trend-down text-2xl text-red-500"></i></div><span class="text-xs font-semibold text-brand-dark">Pengeluaran</span></button>
+                <button class="flex flex-col items-center gap-2 group"><div class="w-14 h-14 rounded-2xl bg-brand-lime/20 flex items-center justify-center"><i class="ph ph-trend-up text-2xl text-brand-dark"></i></div><span class="text-xs font-semibold text-brand-dark">Pemasukan</span></button>
+                <button class="flex flex-col items-center gap-2 group"><div class="w-14 h-14 rounded-2xl bg-brand-lime/20 flex items-center justify-center"><i class="ph ph-chart-pie-slice text-2xl text-brand-dark"></i></div><span class="text-xs font-semibold text-brand-dark">Laporan</span></button>
+                <button class="flex flex-col items-center gap-2 group"><div class="w-14 h-14 rounded-2xl bg-brand-lime/20 flex items-center justify-center"><i class="ph ph-wallet text-2xl text-brand-dark"></i></div><span class="text-xs font-semibold text-brand-dark">Anggaran</span></button>
+            </div>
+        </section>
+
+        {{ if .TopSavings }}
+        <section class="px-6 mb-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold text-brand-dark">Tabungan & Target</h3>
+                <a href="/savings" class="text-xs font-semibold text-brand-dark/60 hover:text-brand-dark">Lihat Semua</a>
+            </div>
+            <div class="flex flex-col gap-3">
+                {{ range .TopSavings }}
+                <a href="/savings/{{ .ID }}" class="block">
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl hover:bg-gray-100 transition">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background-color: {{ .Color }}22">
+                            <i class="ph {{ .Icon }} text-xl" style="color: {{ .Color }}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-sm font-bold text-brand-dark truncate">{{ .Name }}</p>
+                                <span class="text-xs font-bold ml-2 shrink-0" style="color: {{ .Color }}">{{ .Percentage }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="h-1.5 rounded-full" style="width: {{ .Percentage }}%; background-color: {{ .Color }}"></div>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <p class="text-[10px] text-brand-muted">Rp {{ .FormattedCurrent }}</p>
+                                <p class="text-[10px] text-brand-muted">Rp {{ .FormattedTarget }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {{ end }}
+            </div>
+        </section>
+        {{ end }}
+
+        <section class="px-6 pb-28 flex-1 overflow-y-auto mt-4">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-base font-bold text-brand-dark">Transaksi Terakhir</h3>
+                <a href="/history" class="text-xs font-semibold text-brand-dark/60 hover:text-brand-dark">Lihat Semua</a>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+                {{ range .Transactions }}
+                <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-2xl transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-brand-lime/20 flex items-center justify-center">
+                            <i class="ph {{ .Icon }} text-xl {{ if eq .Type "income" }}text-brand-dark{{ else }}text-red-500{{ end }}"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-brand-dark mb-0.5">{{ .Category }}</p>
+                            <p class="text-[11px] font-medium text-brand-muted">{{ .FormattedDate }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[15px] font-bold {{ if eq .Type "income" }}text-[#01381b]{{ else }}text-red-500{{ end }}">
+                            {{ if eq .Type "income" }}+{{ else }}-{{ end }}Rp {{ .FormattedAmount }}
+                        </p>
+                    </div>
+                </div>
+                {{ else }}
+                <p class="text-brand-dark/50 text-sm text-center py-4">Belum ada transaksi bulan ini.</p>
+                {{ end }}
+            </div>
+        </section>
+
+        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+            <div class="flex justify-between items-center relative">
+                <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white">
+                    <i class="ph-fill ph-house text-2xl"></i>
+                    <span class="text-[9px] font-medium opacity-80">Beranda</span>
+                </a>
+                <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-chart-bar text-2xl"></i>
+                    <span class="text-[9px] font-medium">Statistik</span>
+                </a>
+                <div class="relative -top-6 flex justify-center w-14">
+                    <button onclick="openTransactionModal()" class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                        <i class="ph ph-plus text-2xl font-bold"></i>
+                    </button>
+                </div>
+                <a href="/savings" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-piggy-bank text-2xl"></i>
+                    <span class="text-[9px] font-medium">Tabungan</span>
+                </a>
+                <a href="/profile" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition">
+                    <i class="ph ph-user text-2xl"></i>
+                    <span class="text-[9px] font-medium">Profil</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+
+    <div id="trxModalBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeTransactionModal()"></div>
+    
+    <div id="trxModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+        <h2 class="text-xl font-bold text-brand-dark mb-6 text-center">Catat Transaksi Baru</h2>
+        
+        <form action="/transaction" method="POST" enctype="multipart/form-data" class="flex flex-col gap-5 pb-4" id="transactionForm">
+            <div id="amountInputContainer">
+                <div class="relative flex gap-2 items-center">
+                    <div class="relative flex-1">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold text-xl">Rp</span>
+                        <input type="number" name="amount" id="amountInput" placeholder="0" required 
+                            class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-3xl font-bold rounded-2xl pl-14 pr-4 py-5 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-300">
+                    </div>
+                    
+                    <label for="ocrInput" class="w-16 h-[72px] bg-brand-dark text-brand-lime rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#024a24] transition active:scale-95 shadow-sm shrink-0">
+                        <i class="ph ph-scan text-2xl mb-1"></i>
+                        <span class="text-[9px] font-semibold">Scan</span>
+                    </label>
+                    
+                    <input type="file" id="ocrInput" name="receipt" accept="image/*" capture="environment" class="hidden"
+                           hx-post="/api/ocr" 
+                           hx-encoding="multipart/form-data" 
+                           hx-target="#amountInputContainer" 
+                           hx-swap="outerHTML" 
+                           hx-indicator="#ocrLoading">
+                </div>
+                
+                <div id="ocrLoading" class="htmx-indicator mt-3 text-xs font-semibold text-brand-dark flex items-center justify-center gap-2 bg-brand-lime/20 py-2 rounded-xl border border-brand-lime/50">
+                    <i class="ph ph-spinner animate-spin text-lg"></i> AI sedang membaca struk...
+                </div>
+            </div>
+            
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-tag text-brand-dark"></i>
+                </div>
+                <select name="category_id" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-10 py-4 focus:outline-none focus:border-brand-lime appearance-none">
+                    <option value="1">🍔 Makan & Minum</option>
+                    <option value="2">🚗 Transportasi</option>
+                    <option value="3">⚡ Tagihan & Utilitas</option>
+                    <option value="4">💰 Gaji & Pendapatan</option>
+                </select>
+                <i class="ph ph-caret-down absolute right-5 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none"></i>
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-calendar text-brand-dark"></i>
+                </div>
+                <input type="datetime-local" name="date" id="dateInput"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime">
+            </div>
+
+            <div class="relative">
+                <div class="absolute left-4 top-4 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
+                    <i class="ph ph-note text-brand-dark"></i>
+                </div>
+                <input type="text" name="note" placeholder="Catatan (opsional)"
+                    class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400">
+            </div>
+
+            <!-- Receipt upload -->
+            <div>
+                <label class="flex items-center gap-3 p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-brand-lime transition" id="receiptLabel">
+                    <div class="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
+                        <i class="ph ph-image text-brand-dark"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-brand-dark" id="receiptLabelText">Upload Struk / Bukti (opsional)</p>
+                        <p class="text-[10px] text-brand-muted">JPG, PNG, max 5MB</p>
+                    </div>
+                    <i class="ph ph-upload-simple text-brand-muted text-lg"></i>
+                    <input type="file" name="receipt_image" id="receiptInput" accept="image/*" class="hidden" onchange="previewReceipt(this)">
+                </label>
+                <div id="receiptPreview" class="hidden mt-2 relative">
+                    <img id="receiptImg" src="" alt="Preview" class="w-full rounded-2xl object-cover max-h-32">
+                    <button type="button" onclick="clearReceipt()" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center">
+                        <i class="ph ph-x text-sm"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-2">
+                <button type="submit" name="type" value="expense" id="btnExpense" class="flex-1 bg-red-50 hover:bg-red-100 text-red-500 py-4 rounded-2xl font-bold text-base transition flex justify-center items-center gap-2 active:scale-95">
+                    <i class="ph ph-arrow-down-right text-xl"></i> Pengeluaran
+                </button>
+                <button type="submit" name="type" value="income" id="btnIncome" class="flex-1 bg-brand-lime hover:bg-[#a3d124] text-brand-dark py-4 rounded-2xl font-bold text-base transition flex justify-center items-center gap-2 active:scale-95">
+                    <i class="ph ph-arrow-up-right text-xl"></i> Pemasukan
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            console.log('New version available');
+                        });
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+
+            // Listen for messages from service worker
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data.type === 'SYNC_COMPLETE') {
+                    console.log('Synced', event.data.count, 'offline transactions');
+                    // Reload page to show synced data
+                    window.location.reload();
+                }
+            });
+        }
+
+        // Show install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show custom install button (can be added in Phase 3)
+            console.log('Install prompt available');
+        });
+
+        function openTransactionModal() {
+            const backdrop = document.getElementById('trxModalBackdrop');
+            const modal = document.getElementById('trxModal');
+            
+            // Set default date to now
+            const now = new Date();
+            const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('dateInput').value = localISO;
+            
+            backdrop.classList.remove('hidden');
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                modal.classList.remove('translate-y-full');
+            }, 10);
+        }
+        
+        function closeTransactionModal() {
+            const backdrop = document.getElementById('trxModalBackdrop');
+            const modal = document.getElementById('trxModal');
+            
+            backdrop.classList.add('opacity-0');
+            modal.classList.add('translate-y-full');
+            
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+            }, 300);
+        }
+
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+
+            msg.textContent = message;
+
+            if (type === 'success') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            } else if (type === 'error') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            } else if (type === 'info') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-blue-500 text-white';
+                icon.className = 'ph ph-info text-white text-xl';
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        // Handle form submit with loading state
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            const btn = e.submitter;
+            if (!btn) return;
+
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i>';
+
+            // Re-enable after redirect
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }, 3000);
+
+            closeTransactionModal();
+        });
+
+        function previewReceipt(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('Ukuran file maksimal 5MB', 'error');
+                    input.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('receiptImg').src = e.target.result;
+                    document.getElementById('receiptPreview').classList.remove('hidden');
+                    document.getElementById('receiptLabelText').textContent = file.name;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearReceipt() {
+            document.getElementById('receiptInput').value = '';
+            document.getElementById('receiptPreview').classList.add('hidden');
+            document.getElementById('receiptLabelText').textContent = 'Upload Struk / Bukti (opsional)';
+        }
+
+        // Show toast if redirected after success (check URL params)
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('saved') === '1') {
+                showToast('Transaksi berhasil disimpan!', 'success');
+                // Clean URL
+                history.replaceState({}, '', '/');
+            }
+        });
+    </script>
+</body>
+</html>

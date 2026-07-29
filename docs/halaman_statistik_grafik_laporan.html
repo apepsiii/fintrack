@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistik - FinTrack</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+    </style>
+</head>
+<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+        
+        <header class="pt-8 px-6 flex justify-between items-center mb-6">
+            <h1 class="text-xl font-bold text-brand-dark tracking-tight">Analisis Laporan</h1>
+            <button class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center transition active:scale-95">
+                <i class="ph ph-calendar-blank text-xl text-brand-dark font-bold"></i>
+            </button>
+        </header>
+
+        <section class="px-6 mb-8">
+            <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100 text-center flex flex-col items-center">
+                <p class="text-sm font-medium text-brand-muted mb-1">Total Pengeluaran (Bulan Ini)</p>
+                <h2 class="text-3xl font-extrabold text-[#ff4d4f] tracking-tight mb-3">Rp {{ .TotalExpense }}</h2>
+                <div class="inline-flex items-center gap-1.5 bg-brand-lime/20 text-brand-dark px-3 py-1 rounded-full text-xs font-semibold">
+                    <i class="ph ph-info"></i> Sesuai jalur (On Track)
+                </div>
+            </div>
+        </section>
+
+        <section class="px-6 pb-28 flex-1 overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-base font-bold text-brand-dark">Rincian Kategori</h3>
+            </div>
+            
+            <div class="flex flex-col gap-5">
+                {{ range .Stats }}
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center">
+                                <i class="ph {{ .Icon }} text-lg text-brand-dark"></i>
+                            </div>
+                            <span class="text-sm font-bold text-brand-dark">{{ .CategoryName }}</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-brand-dark">Rp {{ .Amount }}</p>
+                            <p class="text-[10px] text-brand-muted font-medium">{{ .Percentage }}% dari total</p>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2">
+                        <div class="bg-brand-dark h-2 rounded-full transition-all duration-1000 ease-out" style="width: {{ .Percentage }}%;"></div>
+                    </div>
+                </div>
+                {{ else }}
+                <p class="text-brand-dark/50 text-sm text-center py-4">Belum ada pengeluaran untuk dianalisis.</p>
+                {{ end }}
+            </div>
+        </section>
+
+        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+            <div class="flex justify-between items-center relative">
+                <a href="/" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-house text-2xl"></i>
+                    <span class="text-[9px] font-medium opacity-80">Beranda</span>
+                </a>
+                
+                <a href="/stats" class="flex flex-col items-center gap-1.5 w-12 text-white">
+                    <i class="ph-fill ph-chart-bar text-2xl"></i>
+                    <span class="text-[9px] font-medium">Statistik</span>
+                </a>
+                
+                <div class="relative -top-6 flex justify-center w-16">
+                    <button class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                        <i class="ph ph-plus text-2xl font-bold"></i>
+                    </button>
+                </div>
+
+                <a href="/targets" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-target text-2xl"></i>
+                    <span class="text-[9px] font-medium">Target</span>
+                </a>
+                
+                <a href="/profile" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-user text-2xl"></i>
+                    <span class="text-[9px] font-medium">Profil</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+</body>
+</html>

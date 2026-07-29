@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>Masuk - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="FinTrack">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: { lime: '#c3f545', dark: '#01381b', muted: '#809b8d' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+        <!-- Branding -->
+        <section class="bg-brand-lime pt-16 pb-12 px-6 flex flex-col items-center relative overflow-hidden rounded-b-[2.5rem] shadow-sm">
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/30 rounded-full blur-3xl"></div>
+            <div class="w-20 h-20 bg-brand-dark rounded-3xl flex items-center justify-center mb-6 shadow-xl animate-float rotate-3">
+                <i class="ph ph-wallet text-5xl text-brand-lime"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight mb-2">FinTrack</h1>
+            <p class="text-brand-dark/70 text-sm font-medium text-center max-w-[250px]">Cara paling cerdas untuk mencatat dan mengatur uang Anda.</p>
+        </section>
+
+        <!-- Login Form -->
+        <section id="loginSection" class="px-8 pt-10 pb-8 flex-1 flex flex-col -mt-6 bg-white relative z-0">
+            <h2 class="text-xl font-bold text-brand-dark mb-6">Selamat Datang 👋</h2>
+
+            {{ if .error }}
+            <div class="bg-red-50 border border-red-200 text-red-600 text-sm font-semibold px-4 py-3 rounded-2xl mb-4 flex items-center gap-2">
+                <i class="ph ph-warning-circle text-lg"></i> {{ .error }}
+            </div>
+            {{ end }}
+
+            <form action="/login" method="POST" class="flex flex-col gap-5 flex-1">
+                <div>
+                    <label class="block text-xs font-bold text-brand-dark mb-2 uppercase tracking-wide">Alamat Email</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="ph ph-envelope text-brand-muted text-lg"></i>
+                        </div>
+                        <input type="email" name="email" placeholder="nama@email.com" required
+                            class="w-full bg-gray-50 border border-gray-100 text-brand-dark rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-400 font-medium text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-brand-dark mb-2 uppercase tracking-wide">Kata Sandi</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="ph ph-lock-key text-brand-muted text-lg"></i>
+                        </div>
+                        <input type="password" id="loginPassword" name="password" placeholder="••••••••" required
+                            class="w-full bg-gray-50 border border-gray-100 text-brand-dark rounded-2xl pl-12 pr-12 py-4 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-400 font-medium text-sm">
+                        <button type="button" onclick="togglePwd('loginPassword', this)" class="absolute inset-y-0 right-0 pr-4 flex items-center text-brand-muted hover:text-brand-dark transition">
+                            <i class="ph ph-eye text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 flex flex-col gap-3">
+                    <button type="submit" class="w-full bg-brand-dark hover:bg-[#024a24] text-white py-4 rounded-2xl font-bold text-sm transition shadow-lg active:scale-95">
+                        Masuk ke Akun
+                    </button>
+                </div>
+            </form>
+
+            <p class="text-center text-xs font-medium text-brand-muted mt-6">
+                Belum punya akun? <button onclick="showRegister()" class="text-brand-dark font-bold hover:underline">Daftar sekarang</button>
+            </p>
+        </section>
+
+        <!-- Register Form -->
+        <section id="registerSection" class="hidden px-8 pt-10 pb-8 flex-1 flex flex-col -mt-6 bg-white relative z-0">
+            <div class="flex items-center gap-3 mb-6">
+                <button onclick="showLogin()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                    <i class="ph ph-caret-left text-brand-dark"></i>
+                </button>
+                <h2 class="text-xl font-bold text-brand-dark">Buat Akun Baru</h2>
+            </div>
+
+            <div id="registerError" class="hidden bg-red-50 border border-red-200 text-red-600 text-sm font-semibold px-4 py-3 rounded-2xl mb-4 flex items-center gap-2">
+                <i class="ph ph-warning-circle text-lg"></i> <span id="registerErrorMsg"></span>
+            </div>
+
+            <form id="registerForm" class="flex flex-col gap-4 flex-1">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="ph ph-user text-brand-muted text-lg"></i>
+                    </div>
+                    <input type="text" name="name" placeholder="Nama lengkap" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-400 font-medium text-sm">
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="ph ph-envelope text-brand-muted text-lg"></i>
+                    </div>
+                    <input type="email" name="email" placeholder="nama@email.com" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-400 font-medium text-sm">
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="ph ph-lock-key text-brand-muted text-lg"></i>
+                    </div>
+                    <input type="password" id="regPassword" name="password" placeholder="Password (min. 6 karakter)" required
+                        class="w-full bg-gray-50 border border-gray-100 text-brand-dark rounded-2xl pl-12 pr-12 py-4 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-400 font-medium text-sm">
+                    <button type="button" onclick="togglePwd('regPassword', this)" class="absolute inset-y-0 right-0 pr-4 flex items-center text-brand-muted hover:text-brand-dark transition">
+                        <i class="ph ph-eye text-lg"></i>
+                    </button>
+                </div>
+                <div class="mt-auto pt-4">
+                    <button type="submit" id="btnRegister" class="w-full bg-brand-lime hover:bg-[#a3d124] text-brand-dark py-4 rounded-2xl font-bold text-sm transition shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                        <i class="ph ph-user-plus text-lg"></i> Buat Akun
+                    </button>
+                </div>
+            </form>
+
+            <p class="text-center text-xs font-medium text-brand-muted mt-6">
+                Sudah punya akun? <button onclick="showLogin()" class="text-brand-dark font-bold hover:underline">Masuk</button>
+            </p>
+        </section>
+    </main>
+
+    <script>
+        function showRegister() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.remove('hidden');
+        }
+        function showLogin() {
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        function togglePwd(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'ph ph-eye-slash text-lg';
+            } else {
+                input.type = 'password';
+                icon.className = 'ph ph-eye text-lg';
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnRegister');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>';
+
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch('/register', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    const errEl = document.getElementById('registerError');
+                    document.getElementById('registerErrorMsg').textContent = data.error || 'Gagal mendaftar';
+                    errEl.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph ph-user-plus text-lg"></i> Buat Akun';
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-user-plus text-lg"></i> Buat Akun';
+            }
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js').catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>

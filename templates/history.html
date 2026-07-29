@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c3f545">
+    <title>Riwayat Transaksi - FinTrack</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/dark-mode.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', limeDark: '#a3d124', dark: '#01381b', light: '#f8faf7', muted: '#809b8d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
+    </style>
+</head>
+<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+
+        <header class="pt-8 px-6 flex justify-between items-center mb-4">
+            <div class="flex items-center gap-3">
+                <a href="/" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <i class="ph ph-caret-left text-xl text-brand-dark"></i>
+                </a>
+                <h1 class="text-xl font-bold text-brand-dark tracking-tight">Riwayat Transaksi</h1>
+            </div>
+            <button onclick="toggleFilter()" class="w-10 h-10 rounded-full bg-brand-lime/20 flex items-center justify-center transition active:scale-95 text-brand-dark">
+                <i class="ph ph-funnel text-xl"></i>
+            </button>
+        </header>
+
+        <!-- Filter Panel -->
+        <div id="filterPanel" class="hidden px-6 pb-4">
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col gap-3">
+                <div class="flex gap-2">
+                    <button onclick="setFilter('all')" id="filterAll" class="flex-1 py-2 rounded-xl text-xs font-bold transition bg-brand-dark text-white">Semua</button>
+                    <button onclick="setFilter('expense')" id="filterExpense" class="flex-1 py-2 rounded-xl text-xs font-bold transition bg-white text-brand-dark border border-gray-200">Pengeluaran</button>
+                    <button onclick="setFilter('income')" id="filterIncome" class="flex-1 py-2 rounded-xl text-xs font-bold transition bg-white text-brand-dark border border-gray-200">Pemasukan</button>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <input type="month" id="filterMonth" class="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-dark focus:outline-none focus:border-brand-lime">
+                    <button onclick="applyFilter()" class="bg-brand-lime hover:bg-brand-limeDark text-brand-dark px-4 py-2 rounded-xl text-xs font-bold transition">Terapkan</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Bar -->
+        <div class="px-6 mb-4">
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex justify-between items-center">
+                <div class="text-center">
+                    <p class="text-[10px] text-brand-muted font-medium mb-0.5">Pemasukan</p>
+                    <p class="text-sm font-bold text-brand-dark">Rp {{ .TotalIncome }}</p>
+                </div>
+                <div class="w-px h-8 bg-gray-200"></div>
+                <div class="text-center">
+                    <p class="text-[10px] text-brand-muted font-medium mb-0.5">Pengeluaran</p>
+                    <p class="text-sm font-bold text-red-500">Rp {{ .TotalExpense }}</p>
+                </div>
+                <div class="w-px h-8 bg-gray-200"></div>
+                <div class="text-center">
+                    <p class="text-[10px] text-brand-muted font-medium mb-0.5">Total</p>
+                    <p class="text-sm font-bold text-brand-dark">{{ .TotalCount }} transaksi</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <section class="px-6 pb-28 flex-1 overflow-y-auto">
+            {{ if .Transactions }}
+                {{ $currentDate := "" }}
+                {{ range .Transactions }}
+                    {{ if ne .FormattedDay $currentDate }}
+                        {{ if ne $currentDate "" }}</div>{{ end }}
+                        <div class="mb-1">
+                        <p class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-4">{{ .FormattedDay }}</p>
+                    {{ end }}
+
+                    <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer group" onclick="openDetail({{ .ID }})">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl {{ if eq .Type "income" }}bg-brand-lime/20{{ else }}bg-red-50{{ end }} flex items-center justify-center shrink-0">
+                                <i class="ph {{ .Icon }} text-lg {{ if eq .Type "income" }}text-brand-dark{{ else }}text-red-500{{ end }}"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-brand-dark mb-0.5">{{ .Category }}</p>
+                                <p class="text-[11px] font-medium text-brand-muted">{{ .FormattedTime }}{{ if .Note }} · {{ .Note }}{{ end }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right flex items-center gap-2">
+                            {{ if .ReceiptPath }}
+                            <div class="w-8 h-8 rounded-lg overflow-hidden border border-gray-100 shrink-0">
+                                <img src="{{ .ReceiptPath }}" alt="struk" class="w-full h-full object-cover">
+                            </div>
+                            {{ end }}
+                            <div>
+                                <p class="text-sm font-bold {{ if eq .Type "income" }}text-brand-dark{{ else }}text-red-500{{ end }}">
+                                    {{ if eq .Type "income" }}+{{ else }}-{{ end }}Rp {{ .FormattedAmount }}
+                                </p>
+                            </div>
+                            <i class="ph ph-caret-right text-gray-300 opacity-0 group-hover:opacity-100 transition"></i>
+                        </div>
+                    </div>
+                {{ end }}
+                </div>
+
+                <!-- Pagination -->
+                {{ if or .HasPrev .HasNext }}
+                <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+                    {{ if .HasPrev }}
+                    <a href="/history?page={{ .PrevPage }}&type={{ .FilterType }}&month={{ .FilterMonth }}" class="flex items-center gap-2 text-sm font-semibold text-brand-dark hover:text-brand-dark/70 transition">
+                        <i class="ph ph-caret-left"></i> Sebelumnya
+                    </a>
+                    {{ else }}
+                    <div></div>
+                    {{ end }}
+
+                    <span class="text-xs text-brand-muted font-medium">Hal {{ .CurrentPage }} / {{ .TotalPages }}</span>
+
+                    {{ if .HasNext }}
+                    <a href="/history?page={{ .NextPage }}&type={{ .FilterType }}&month={{ .FilterMonth }}" class="flex items-center gap-2 text-sm font-semibold text-brand-dark hover:text-brand-dark/70 transition">
+                        Berikutnya <i class="ph ph-caret-right"></i>
+                    </a>
+                    {{ else }}
+                    <div></div>
+                    {{ end }}
+                </div>
+                {{ end }}
+
+            {{ else }}
+                <!-- Empty state -->
+                <div class="flex flex-col items-center justify-center py-16 text-center">
+                    <svg class="w-32 h-32 mb-6" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="80" fill="#f1f5f9"/>
+                        <rect x="55" y="65" width="90" height="110" rx="10" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+                        <rect x="70" y="85" width="60" height="6" rx="3" fill="#e5e7eb"/>
+                        <rect x="70" y="100" width="40" height="6" rx="3" fill="#e5e7eb"/>
+                        <rect x="70" y="115" width="50" height="6" rx="3" fill="#e5e7eb"/>
+                        <circle cx="140" cy="140" r="25" fill="#c3f545"/>
+                        <path d="M130 140h20M140 130v20" stroke="#01381b" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                    <h3 class="text-base font-bold text-brand-dark mb-2">Belum ada transaksi</h3>
+                    <p class="text-sm text-brand-muted mb-6 max-w-[220px]">Mulai catat pemasukan dan pengeluaranmu sekarang</p>
+                    <a href="/" class="bg-brand-lime hover:bg-brand-limeDark text-brand-dark px-6 py-3 rounded-2xl font-bold text-sm transition active:scale-95">
+                        Catat Sekarang
+                    </a>
+                </div>
+            {{ end }}
+        </section>
+
+        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+            <div class="flex justify-between items-center relative">
+                <a href="/" class="flex flex-col items-center gap-1.5 w-12 text-white">
+                    <i class="ph-fill ph-house text-2xl"></i>
+                    <span class="text-[9px] font-medium opacity-80">Beranda</span>
+                </a>
+                <a href="/stats" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-chart-bar text-2xl"></i>
+                    <span class="text-[9px] font-medium">Statistik</span>
+                </a>
+                <div class="relative -top-6 flex justify-center w-16">
+                    <a href="/?open=1" class="w-14 h-14 rounded-full bg-brand-lime border-4 border-white flex items-center justify-center text-brand-dark fab-shadow active:scale-95 transition">
+                        <i class="ph ph-plus text-2xl font-bold"></i>
+                    </a>
+                </div>
+                <a href="/targets" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-target text-2xl"></i>
+                    <span class="text-[9px] font-medium">Target</span>
+                </a>
+                <a href="/profile" class="flex flex-col items-center gap-1.5 w-12 text-white/50 hover:text-white transition">
+                    <i class="ph ph-user text-2xl"></i>
+                    <span class="text-[9px] font-medium">Profil</span>
+                </a>
+            </div>
+        </nav>
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detailBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeDetail()"></div>
+    <div id="detailModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-6 z-[70] translate-y-full transition-transform duration-300 shadow-2xl">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+        <div id="detailContent" class="pb-4">
+            <div class="flex justify-center mb-4">
+                <div class="animate-spin w-8 h-8 border-4 border-brand-lime border-t-transparent rounded-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = '{{ .FilterType }}';
+        let currentMonth = '{{ .FilterMonth }}';
+
+        function toggleFilter() {
+            const panel = document.getElementById('filterPanel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) {
+                document.getElementById('filterMonth').value = currentMonth || new Date().toISOString().slice(0, 7);
+            }
+        }
+
+        function setFilter(type) {
+            currentFilter = type;
+            ['all', 'expense', 'income'].forEach(f => {
+                const btn = document.getElementById('filter' + f.charAt(0).toUpperCase() + f.slice(1));
+                if (f === type) {
+                    btn.className = 'flex-1 py-2 rounded-xl text-xs font-bold transition bg-brand-dark text-white';
+                } else {
+                    btn.className = 'flex-1 py-2 rounded-xl text-xs font-bold transition bg-white text-brand-dark border border-gray-200';
+                }
+            });
+        }
+
+        function applyFilter() {
+            const month = document.getElementById('filterMonth').value;
+            window.location.href = `/history?page=1&type=${currentFilter}&month=${month}`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            msg.textContent = message;
+            if (type === 'success') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            } else {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        async function openDetail(id) {
+            const backdrop = document.getElementById('detailBackdrop');
+            const modal = document.getElementById('detailModal');
+            backdrop.classList.remove('hidden');
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                modal.classList.remove('translate-y-full');
+            }, 10);
+
+            try {
+                const res = await fetch(`/api/transaction/${id}`);
+                const trx = await res.json();
+
+                const typeLabel = trx.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+                const typeColor = trx.type === 'income' ? 'text-brand-dark' : 'text-red-500';
+                const typeBg = trx.type === 'income' ? 'bg-brand-lime/20' : 'bg-red-50';
+                const sign = trx.type === 'income' ? '+' : '-';
+
+                document.getElementById('detailContent').innerHTML = `
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="w-16 h-16 rounded-2xl ${typeBg} flex items-center justify-center mb-3">
+                            <i class="ph ${trx.icon} text-3xl ${typeColor}"></i>
+                        </div>
+                        <p class="text-3xl font-extrabold ${typeColor}">${sign}Rp ${trx.formatted_amount}</p>
+                        <p class="text-sm text-brand-muted mt-1">${trx.category}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-2xl p-4 flex flex-col gap-3 mb-4">
+                        <div class="flex justify-between">
+                            <span class="text-xs text-brand-muted">Tipe</span>
+                            <span class="text-xs font-bold text-brand-dark">${typeLabel}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-brand-muted">Tanggal</span>
+                            <span class="text-xs font-bold text-brand-dark">${trx.formatted_date}</span>
+                        </div>
+                        ${trx.note ? `<div class="flex justify-between">
+                            <span class="text-xs text-brand-muted">Catatan</span>
+                            <span class="text-xs font-bold text-brand-dark">${trx.note}</span>
+                        </div>` : ''}
+                    </div>
+                    ${trx.receipt_path ? `<div class="mb-4">
+                        <p class="text-xs font-bold text-brand-muted mb-2">Bukti / Struk</p>
+                        <a href="${trx.receipt_path}" target="_blank">
+                            <img src="${trx.receipt_path}" alt="struk" class="w-full rounded-2xl object-cover max-h-48 border border-gray-100">
+                        </a>
+                    </div>` : ''}
+                    <button onclick="deleteTransaction(${trx.id})" class="w-full flex items-center justify-center gap-2 p-4 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl transition font-bold text-sm">
+                        <i class="ph ph-trash text-lg"></i> Hapus Transaksi
+                    </button>
+                `;
+            } catch (e) {
+                document.getElementById('detailContent').innerHTML = '<p class="text-center text-red-500 text-sm">Gagal memuat detail</p>';
+            }
+        }
+
+        function closeDetail() {
+            const backdrop = document.getElementById('detailBackdrop');
+            const modal = document.getElementById('detailModal');
+            backdrop.classList.add('opacity-0');
+            modal.classList.add('translate-y-full');
+            setTimeout(() => backdrop.classList.add('hidden'), 300);
+        }
+
+        async function deleteTransaction(id) {
+            if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
+            try {
+                const res = await fetch(`/api/transaction/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    closeDetail();
+                    showToast('Transaksi berhasil dihapus', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast('Gagal menghapus transaksi', 'error');
+                }
+            } catch(e) {
+                showToast('Gagal menghapus transaksi', 'error');
+            }
+        }
+
+        // Initialize filter state from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlType = urlParams.get('type') || 'all';
+        setFilter(urlType);
+    </script>
+</body>
+</html>
