@@ -396,5 +396,20 @@
             }
         });
     </script>
-<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/static/service-worker.js");navigator.serviceWorker.addEventListener("message",(e)=>{if(e.data</body></body>e.data.type==="SYNC_COMPLETE"){const b=document.createElement("div");b.style.cssText="position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";b.textContent="✓ "+e.data.count+" transaksi offline berhasil disinkronkan";document.body.appendChild(b);setTimeout(()=>{b.remove();location.reload();},2500);}});}</script></body>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/service-worker.js");
+  navigator.serviceWorker.addEventListener("message", function(e) {
+    if (e.data && e.data.type === "SYNC_COMPLETE") {
+      var b = document.createElement("div");
+      b.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";
+      b.textContent = "✓ " + e.data.count + " transaksi offline berhasil disinkronkan";
+      document.body.appendChild(b);
+      setTimeout(function(){ b.remove(); location.reload(); }, 2500);
+    }
+  });
+}
+</script>
+</body>
 </html>
