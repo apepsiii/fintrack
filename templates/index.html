@@ -246,6 +246,8 @@
             <i class="ph ph-warning-circle text-red-500 text-lg shrink-0"></i>
             <p class="text-sm font-semibold text-red-600" id="saldoErrorMsg"></p>
         </div>
+
+        <!-- Amount + Scan -->
         <div id="amountInputContainer">
             <div class="relative flex gap-2 items-center">
                 <div class="relative flex-1">
@@ -257,14 +259,14 @@
                     <i class="ph ph-scan text-2xl mb-1"></i>
                     <span class="text-[9px] font-semibold">Scan</span>
                 </label>
-                <input type="file" id="ocrInput" name="receipt" accept="image/*" capture="environment" class="hidden"
-                    hx-post="/api/ocr" hx-encoding="multipart/form-data" hx-target="#amountInputContainer" hx-swap="outerHTML" hx-indicator="#ocrLoading">
+                <input type="file" id="ocrInput" accept="image/*" capture="environment" class="hidden" onchange="handleOcrScan(this)">
             </div>
-            <div id="ocrLoading" class="htmx-indicator mt-2 text-xs font-semibold text-brand-dark flex items-center justify-center gap-2 bg-brand-lime/20 py-2 rounded-xl">
-                <i class="ph ph-spinner animate-spin text-lg"></i> Membaca struk...
+            <div id="ocrLoading" class="hidden mt-2 text-xs font-semibold text-brand-dark flex items-center justify-center gap-2 bg-brand-lime/20 py-2 rounded-xl">
+                <i class="ph ph-spinner animate-spin text-lg"></i> <span id="ocrLoadingText">Membaca struk...</span>
             </div>
         </div>
 
+        <!-- Kategori -->
         <div class="relative">
             <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
                 <i class="ph ph-tag text-brand-dark"></i>
@@ -284,6 +286,7 @@
             <i class="ph ph-caret-down absolute right-5 top-1/2 -translate-y-1/2 text-brand-muted pointer-events-none"></i>
         </div>
 
+        <!-- Tanggal -->
         <div class="relative">
             <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
                 <i class="ph ph-calendar text-brand-dark"></i>
@@ -292,14 +295,7 @@
                 class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime text-sm">
         </div>
 
-        <div class="relative">
-            <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
-                <i class="ph ph-note text-brand-dark"></i>
-            </div>
-            <input type="text" name="note" placeholder="Catatan (opsional)"
-                class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
-        </div>
-
+        <!-- Upload struk -->
         <label class="flex items-center gap-3 p-3 bg-gray-50 border border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-brand-lime transition" id="receiptLabel">
             <i class="ph ph-image text-brand-muted text-lg shrink-0"></i>
             <div class="flex-1">
@@ -315,6 +311,15 @@
             </button>
         </div>
 
+        <!-- Catatan -->
+        <div class="relative">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center pointer-events-none">
+                <i class="ph ph-note text-brand-dark"></i>
+            </div>
+            <input type="text" name="note" id="noteInput" placeholder="Catatan (opsional)"
+                class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-4 py-4 focus:outline-none focus:border-brand-lime transition placeholder-gray-400 text-sm">
+        </div>
+
         <div class="flex gap-3 mt-1">
             <button type="submit" name="type" value="expense" class="flex-1 bg-red-50 hover:bg-red-100 text-red-500 py-4 rounded-2xl font-bold text-sm transition flex justify-center items-center gap-2 active:scale-95">
                 <i class="ph ph-arrow-down-right text-lg"></i> Pengeluaran
@@ -324,6 +329,82 @@
             </button>
         </div>
     </form>
+</div>
+
+<!-- OCR Loading Overlay -->
+<div id="ocrLoadingOverlay" class="fixed inset-0 bg-brand-dark/80 z-[100] hidden backdrop-blur-sm flex items-center justify-center">
+    <div class="w-full max-w-xs mx-6 bg-white rounded-3xl p-8 flex flex-col items-center gap-5">
+        <div class="relative w-20 h-20">
+            <div class="absolute inset-0 rounded-full border-4 border-brand-lime/20"></div>
+            <div id="ocrSpinner" class="absolute inset-0 rounded-full border-4 border-transparent border-t-brand-lime animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i id="ocrStepIcon" class="ph ph-upload-simple text-2xl text-brand-dark"></i>
+            </div>
+        </div>
+        <div class="text-center">
+            <p id="ocrStepTitle" class="text-base font-bold text-brand-dark mb-1">Mengupload struk...</p>
+            <p id="ocrStepDesc" class="text-xs text-brand-muted">Tunggu sebentar ya</p>
+        </div>
+        <div class="flex gap-2">
+            <div id="ocrDot1" class="w-2 h-2 rounded-full bg-brand-lime"></div>
+            <div id="ocrDot2" class="w-2 h-2 rounded-full bg-gray-200"></div>
+            <div id="ocrDot3" class="w-2 h-2 rounded-full bg-gray-200"></div>
+        </div>
+    </div>
+</div>
+
+<!-- OCR Confirm Modal -->
+<div id="ocrBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[80] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
+<div id="ocrModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[90] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[92vh]">
+    <div class="p-6 pb-8">
+        <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0">
+                <i class="ph ph-receipt text-lg text-brand-dark"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-bold text-brand-dark">Hasil Scan Struk</h2>
+                <p class="text-[10px] text-brand-muted">Periksa & edit sebelum disimpan</p>
+            </div>
+        </div>
+
+        <!-- Nama toko -->
+        <div class="mb-3">
+            <label class="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1 block">Nama Toko</label>
+            <input type="text" id="ocrStore" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-lime transition">
+        </div>
+
+        <!-- Item belanja -->
+        <div class="mb-3">
+            <label class="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1 block">Item Belanja</label>
+            <div id="ocrItemsList" class="flex flex-col gap-2 mb-2"></div>
+            <button type="button" onclick="addOcrItem()" class="text-[10px] font-bold text-brand-dark flex items-center gap-1 hover:text-brand-lime transition">
+                <i class="ph ph-plus-circle text-sm"></i> Tambah item
+            </button>
+        </div>
+
+        <!-- Total -->
+        <div class="mb-3">
+            <label class="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1 block">Total Belanja</label>
+            <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold">Rp</span>
+                <input type="number" id="ocrTotal" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-bold rounded-xl pl-10 pr-4 py-3 text-lg focus:outline-none focus:border-brand-lime transition">
+            </div>
+        </div>
+
+        <!-- Catatan hasil generate -->
+        <div class="mb-5">
+            <label class="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1 block">Catatan (otomatis)</label>
+            <textarea id="ocrNote" rows="2" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-lime transition resize-none"></textarea>
+        </div>
+
+        <button onclick="applyOcrResult()" class="w-full bg-brand-lime text-brand-dark py-4 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center justify-center gap-2 mb-3">
+            <i class="ph ph-check text-lg"></i> Gunakan Data Ini
+        </button>
+        <button onclick="closeOcrModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-brand-dark py-3.5 rounded-2xl font-bold text-sm transition">
+            Batal
+        </button>
+    </div>
 </div>
 
 <!-- Toast -->
@@ -423,6 +504,169 @@
         document.getElementById('receiptInput').value = '';
         document.getElementById('receiptPreview').classList.add('hidden');
         document.getElementById('receiptLabelText').textContent = 'Upload struk (opsional)';
+    }
+
+    let ocrData = null;
+    let ocrFile = null;
+
+    const ocrSteps = [
+        { icon: 'ph-upload-simple', title: 'Mengupload struk...', desc: 'Tunggu sebentar ya', dot: 1 },
+        { icon: 'ph-scan', title: 'Membaca teks struk...', desc: 'OCR sedang menganalisis gambar', dot: 1 },
+        { icon: 'ph-robot', title: 'AI sedang membantu...', desc: 'Mengolah data kamu dengan cerdas', dot: 2 },
+        { icon: 'ph-check-circle', title: 'Mendapatkan hasil...', desc: 'Hampir selesai!', dot: 3 },
+    ];
+
+    let ocrStepInterval = null;
+
+    function showOcrLoadingOverlay() {
+        document.getElementById('ocrLoadingOverlay').classList.remove('hidden');
+        let step = 0;
+        setOcrStep(step);
+        ocrStepInterval = setInterval(() => {
+            step = Math.min(step + 1, ocrSteps.length - 1);
+            setOcrStep(step);
+        }, 2200);
+    }
+
+    function setOcrStep(i) {
+        const s = ocrSteps[i];
+        document.getElementById('ocrStepIcon').className = `ph ${s.icon} text-2xl text-brand-dark`;
+        document.getElementById('ocrStepTitle').textContent = s.title;
+        document.getElementById('ocrStepDesc').textContent = s.desc;
+        [1,2,3].forEach(d => {
+            document.getElementById('ocrDot'+d).className = d <= s.dot
+                ? 'w-2 h-2 rounded-full bg-brand-lime transition-colors duration-300'
+                : 'w-2 h-2 rounded-full bg-gray-200 transition-colors duration-300';
+        });
+    }
+
+    function hideOcrLoadingOverlay() {
+        clearInterval(ocrStepInterval);
+        document.getElementById('ocrLoadingOverlay').classList.add('hidden');
+    }
+
+    async function handleOcrScan(input) {
+        if (!input.files || !input.files[0]) return;
+        ocrFile = input.files[0];
+
+        showOcrLoadingOverlay();
+
+        const formData = new FormData();
+        formData.append('receipt', ocrFile);
+
+        try {
+            const res = await fetch('/api/ocr', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (res.ok) {
+                ocrData = data;
+                hideOcrLoadingOverlay();
+                showOcrModal(data);
+            } else {
+                hideOcrLoadingOverlay();
+                showToast(data.error || 'Scan gagal', 'error');
+            }
+        } catch(e) {
+            hideOcrLoadingOverlay();
+            showToast('Terjadi kesalahan saat scan', 'error');
+        } finally {
+            input.value = '';
+        }
+    }
+
+    function showOcrModal(data) {
+        document.getElementById('ocrStore').value = data.store || '';
+        document.getElementById('ocrTotal').value = data.total || 0;
+        
+        const itemsList = document.getElementById('ocrItemsList');
+        itemsList.innerHTML = '';
+        (data.items || []).forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'flex gap-2';
+            div.innerHTML = `
+                <input type="text" value="${item}" class="flex-1 bg-gray-50 border border-gray-100 text-brand-dark font-medium rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-brand-lime">
+                <button type="button" onclick="this.parentElement.remove(); updateOcrNote()" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center shrink-0 hover:bg-red-100 transition">
+                    <i class="ph ph-x text-sm"></i>
+                </button>
+            `;
+            itemsList.appendChild(div);
+        });
+        
+        updateOcrNote();
+        
+        document.getElementById('ocrBackdrop').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('ocrBackdrop').classList.remove('opacity-0');
+            document.getElementById('ocrModal').classList.remove('translate-y-full');
+        }, 10);
+    }
+
+    function closeOcrModal() {
+        document.getElementById('ocrBackdrop').classList.add('opacity-0');
+        document.getElementById('ocrModal').classList.add('translate-y-full');
+        setTimeout(() => document.getElementById('ocrBackdrop').classList.add('hidden'), 300);
+    }
+
+    function addOcrItem() {
+        const itemsList = document.getElementById('ocrItemsList');
+        const div = document.createElement('div');
+        div.className = 'flex gap-2';
+        div.innerHTML = `
+            <input type="text" placeholder="Nama item" class="flex-1 bg-gray-50 border border-gray-100 text-brand-dark font-medium rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-brand-lime">
+            <button type="button" onclick="this.parentElement.remove(); updateOcrNote()" class="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center shrink-0 hover:bg-red-100 transition">
+                <i class="ph ph-x text-sm"></i>
+            </button>
+        `;
+        itemsList.appendChild(div);
+    }
+
+    function updateOcrNote() {
+        const store = document.getElementById('ocrStore').value;
+        const items = Array.from(document.querySelectorAll('#ocrItemsList input'))
+            .map(inp => inp.value.trim())
+            .filter(v => v);
+        
+        const dateStr = ocrData?.date || new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+        
+        let note = '';
+        if (items.length > 0) {
+            note = `Belanja ${items.join(', ')}`;
+        }
+        if (store) {
+            note += (note ? ' di ' : '') + store;
+        }
+        if (dateStr && ocrData?.date) {
+            note += ' tgl ' + dateStr;
+        }
+        
+        document.getElementById('ocrNote').value = note;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('ocrStore').addEventListener('input', updateOcrNote);
+        document.getElementById('ocrTotal').addEventListener('input', updateOcrNote);
+    });
+
+    function applyOcrResult() {
+        const total = parseInt(document.getElementById('ocrTotal').value) || 0;
+        const note = document.getElementById('ocrNote').value;
+
+        document.getElementById('amountInput').value = total;
+        document.getElementById('noteInput').value = note;
+
+        if (ocrData && ocrData.category_id) {
+            document.getElementById('categorySelect').value = ocrData.category_id;
+        }
+
+        if (ocrFile) {
+            const dt = new DataTransfer();
+            dt.items.add(ocrFile);
+            document.getElementById('receiptInput').files = dt.files;
+            previewReceipt(document.getElementById('receiptInput'));
+        }
+
+        closeOcrModal();
+        showToast('Data struk berhasil diterapkan');
     }
 
     function toggleSummary() {

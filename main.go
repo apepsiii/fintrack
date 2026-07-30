@@ -154,18 +154,35 @@ func seedCategories() {
 	}
 
 	categories := []Category{
-		{Name: "Makan", Type: "expense", Icon: "ph-hamburger"},
+		// Pengeluaran
+		{Name: "Makanan & Minuman", Type: "expense", Icon: "ph-hamburger"},
 		{Name: "Transport", Type: "expense", Icon: "ph-car"},
-		{Name: "Tagihan", Type: "expense", Icon: "ph-lightning"},
+		{Name: "Belanja", Type: "expense", Icon: "ph-shopping-cart"},
+		{Name: "Tagihan & Utilitas", Type: "expense", Icon: "ph-lightning"},
+		{Name: "Kesehatan", Type: "expense", Icon: "ph-heart"},
+		{Name: "Pendidikan", Type: "expense", Icon: "ph-graduation-cap"},
+		{Name: "Hiburan", Type: "expense", Icon: "ph-game-controller"},
+		{Name: "Pakaian", Type: "expense", Icon: "ph-t-shirt"},
+		{Name: "Perawatan Diri", Type: "expense", Icon: "ph-sparkle"},
+		{Name: "Rumah & Perabot", Type: "expense", Icon: "ph-house"},
+		{Name: "Komunikasi", Type: "expense", Icon: "ph-device-mobile"},
+		{Name: "Olahraga", Type: "expense", Icon: "ph-barbell"},
+		{Name: "Sosial & Hadiah", Type: "expense", Icon: "ph-gift"},
+		{Name: "Investasi", Type: "expense", Icon: "ph-trend-up"},
+		{Name: "Lainnya", Type: "expense", Icon: "ph-dots-three-outline"},
+		// Pemasukan
 		{Name: "Gaji", Type: "income", Icon: "ph-money"},
+		{Name: "Freelance", Type: "income", Icon: "ph-laptop"},
+		{Name: "Bisnis", Type: "income", Icon: "ph-briefcase"},
+		{Name: "Investasi", Type: "income", Icon: "ph-chart-line-up"},
+		{Name: "Hadiah", Type: "income", Icon: "ph-gift"},
+		{Name: "Bonus", Type: "income", Icon: "ph-star"},
+		{Name: "Lainnya", Type: "income", Icon: "ph-dots-three-outline"},
 	}
 
 	for _, cat := range categories {
 		db.Exec("INSERT INTO categories (name, type, icon) VALUES (?, ?, ?)", cat.Name, cat.Type, cat.Icon)
 	}
-
-	db.Exec("INSERT OR IGNORE INTO budgets (category_id, amount_limit) VALUES (1, 1500000)")
-	db.Exec("INSERT OR IGNORE INTO budgets (category_id, amount_limit) VALUES (2, 500000)")
 }
 
 func prevMonthStr(monthYear string) string {
@@ -1031,6 +1048,7 @@ func main() {
 	})
 
 	protected.POST("/api/ocr", func(c *gin.Context) {
+		userID := GetCurrentUserID(c)
 		file, _, err := c.Request.FormFile("receipt")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read file"})
@@ -1038,34 +1056,27 @@ func main() {
 		}
 		defer file.Close()
 
-		// Use OCR service to extract amount
-		amount, err := ocrService.ScanReceipt(file)
-		if err != nil {
-			log.Printf("OCR error: %v", err)
-			// Fallback to mock if OCR fails
-			amount = 85000
+		// Query kategori milik user + default
+		rows, _ := db.Query(`SELECT id, name, type, icon FROM categories WHERE user_id = ? OR user_id IS NULL ORDER BY type, name`, userID)
+		var categories []Category
+		if rows != nil {
+			defer rows.Close()
+			for rows.Next() {
+				var cat Category
+				rows.Scan(&cat.ID, &cat.Name, &cat.Type, &cat.Icon)
+				categories = append(categories, cat)
+			}
 		}
 
-		// Return HTML response for HTMX
-		htmlResponse := `
-		<div class="relative flex gap-2 items-center" id="amountInputContainer">
-			<div class="relative flex-1">
-				<span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/50 font-bold text-xl">Rp</span>
-				<input type="number" name="amount" id="amountInput" value="` + strconv.Itoa(amount) + `" required
-					class="w-full bg-brand-lime/20 border border-brand-lime text-brand-dark text-3xl font-bold rounded-2xl pl-14 pr-4 py-5 focus:outline-none focus:ring-4 focus:ring-brand-lime/40 transition">
-				<span class="absolute right-4 top-1/2 -translate-y-1/2 text-brand-dark text-[10px] font-bold bg-brand-lime px-2 py-1 rounded-lg shadow-sm animate-pulse">
-					<i class="ph ph-check-circle"></i> Hasil Scan
-				</span>
-			</div>
-			<label for="ocrInput" class="w-16 h-[72px] bg-brand-dark text-white rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#024a24] transition active:scale-95 shadow-sm">
-				<i class="ph ph-camera-rotate text-2xl mb-1 text-brand-lime"></i>
-				<span class="text-[9px] font-semibold text-brand-lime">Ulangi</span>
-			</label>
-			<input type="file" id="ocrInput" name="receipt" accept="image/*" capture="environment" class="hidden"
-				hx-post="/api/ocr" hx-encoding="multipart/form-data" hx-target="#amountInputContainer" hx-swap="outerHTML" hx-indicator="#ocrLoading">
-		</div>
-		`
-		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlResponse))
+		result, err := ocrService.ScanReceipt(file, categories)
+		if err != nil {
+			log.Printf("OCR error: %v", err)
+			result = ocrService.mockOCRResult()
+		}
+
+		log.Printf("=== OCR RESULT === store=%q items=%v total=%d date=%q category_id=%d", result.Store, result.Items, result.Total, result.Date, result.CategoryID)
+
+		c.JSON(http.StatusOK, result)
 	})
 
 	// Export endpoints
@@ -1381,6 +1392,41 @@ func main() {
 			"amount_limit": budget.AmountLimit,
 			"month_year":   budget.MonthYear,
 		})
+	})
+
+	protected.DELETE("/api/reset-data", func(c *gin.Context) {
+		userID := GetCurrentUserID(c)
+
+		var req struct {
+			Targets []string `json:"targets"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil || len(req.Targets) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Pilih minimal satu data"})
+			return
+		}
+
+		for _, target := range req.Targets {
+			switch target {
+			case "transactions":
+				db.Exec("DELETE FROM savings_transactions WHERE user_id = ? AND linked_transaction_id IN (SELECT id FROM transactions WHERE user_id = ?)", userID, userID)
+				db.Exec("DELETE FROM transactions WHERE user_id = ?", userID)
+			case "budgets":
+				db.Exec("DELETE FROM budgets WHERE user_id = ?", userID)
+			case "savings":
+				db.Exec("DELETE FROM savings_transactions WHERE user_id = ?", userID)
+				db.Exec("DELETE FROM savings WHERE user_id = ?", userID)
+			case "categories":
+				db.Exec("DELETE FROM budgets WHERE user_id = ? AND category_id IN (SELECT id FROM categories WHERE user_id = ?)", userID, userID)
+				db.Exec("DELETE FROM categories WHERE user_id = ?", userID)
+			case "debts":
+				db.Exec("DELETE FROM debt_payments WHERE debt_id IN (SELECT id FROM debts WHERE user_id = ?)", userID)
+				db.Exec("DELETE FROM debts WHERE user_id = ?", userID)
+			case "recurring":
+				db.Exec("DELETE FROM recurring_transactions WHERE user_id = ?", userID)
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Data berhasil dihapus"})
 	})
 
 	// Register savings routes

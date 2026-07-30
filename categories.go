@@ -20,6 +20,31 @@ var phosphorIcons = []string{
 	"ph-first-aid-kit", "ph-bicycle", "ph-motorcycle",
 }
 
+var defaultCategories = []Category{
+	{Name: "Makanan & Minuman", Type: "expense", Icon: "ph-hamburger"},
+	{Name: "Transport", Type: "expense", Icon: "ph-car"},
+	{Name: "Belanja", Type: "expense", Icon: "ph-shopping-cart"},
+	{Name: "Tagihan & Utilitas", Type: "expense", Icon: "ph-lightning"},
+	{Name: "Kesehatan", Type: "expense", Icon: "ph-heart"},
+	{Name: "Pendidikan", Type: "expense", Icon: "ph-graduation-cap"},
+	{Name: "Hiburan", Type: "expense", Icon: "ph-game-controller"},
+	{Name: "Pakaian", Type: "expense", Icon: "ph-shirt"},
+	{Name: "Perawatan Diri", Type: "expense", Icon: "ph-sparkle"},
+	{Name: "Rumah & Perabot", Type: "expense", Icon: "ph-house"},
+	{Name: "Komunikasi", Type: "expense", Icon: "ph-device-mobile"},
+	{Name: "Olahraga", Type: "expense", Icon: "ph-barbell"},
+	{Name: "Sosial & Hadiah", Type: "expense", Icon: "ph-gift"},
+	{Name: "Investasi", Type: "expense", Icon: "ph-trend-up"},
+	{Name: "Lainnya", Type: "expense", Icon: "ph-dots-three-outline"},
+	{Name: "Gaji", Type: "income", Icon: "ph-money"},
+	{Name: "Freelance", Type: "income", Icon: "ph-laptop"},
+	{Name: "Bisnis", Type: "income", Icon: "ph-briefcase"},
+	{Name: "Investasi", Type: "income", Icon: "ph-chart-line-up"},
+	{Name: "Hadiah", Type: "income", Icon: "ph-gift"},
+	{Name: "Bonus", Type: "income", Icon: "ph-star"},
+	{Name: "Lainnya", Type: "income", Icon: "ph-dots-three-outline"},
+}
+
 func RegisterCategoryRoutes(protected *gin.RouterGroup) {
 
 	protected.GET("/categories", func(c *gin.Context) {
@@ -78,6 +103,22 @@ func RegisterCategoryRoutes(protected *gin.RouterGroup) {
 		}
 		id, _ := result.LastInsertId()
 		c.JSON(http.StatusOK, gin.H{"message": "Kategori berhasil dibuat", "id": id})
+	})
+
+	protected.POST("/api/categories/generate-default", func(c *gin.Context) {
+		userID := GetCurrentUserID(c)
+		added := 0
+
+		for _, cat := range defaultCategories {
+			var count int
+			db.QueryRow(`SELECT COUNT(*) FROM categories WHERE name=? AND type=? AND (user_id IS NULL OR user_id=?)`, cat.Name, cat.Type, userID).Scan(&count)
+			if count == 0 {
+				db.Exec(`INSERT INTO categories (name, type, icon, user_id, is_default) VALUES (?, ?, ?, ?, 0)`, cat.Name, cat.Type, cat.Icon, userID)
+				added++
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{"added": added, "message": "Kategori default berhasil digenerate"})
 	})
 
 	protected.PUT("/api/categories/:id", func(c *gin.Context) {

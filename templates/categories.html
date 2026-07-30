@@ -26,9 +26,14 @@
             </a>
             <h1 class="text-xl font-bold text-brand-dark">Kelola Kategori</h1>
         </div>
-        <button onclick="openAddModal()" class="w-10 h-10 rounded-full bg-brand-lime flex items-center justify-center transition active:scale-95 text-brand-dark shadow-sm">
-            <i class="ph ph-plus text-xl"></i>
-        </button>
+        <div class="flex gap-2">
+            <button onclick="generateDefault()" class="h-10 px-3 rounded-full bg-brand-lime/20 flex items-center gap-1.5 transition active:scale-95 text-brand-dark text-xs font-bold border border-brand-lime/30">
+                <i class="ph ph-magic-wand text-sm"></i> Default
+            </button>
+            <button onclick="openAddModal()" class="w-10 h-10 rounded-full bg-brand-lime flex items-center justify-center transition active:scale-95 text-brand-dark shadow-sm">
+                <i class="ph ph-plus text-xl"></i>
+            </button>
+        </div>
     </header>
 
     <section class="px-6 pb-28 flex-1 overflow-y-auto">
@@ -234,6 +239,14 @@
         const res = await fetch('/api/categories/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (res.ok) { showToast('Kategori dihapus'); setTimeout(() => location.reload(), 600); }
+        else showToast(data.error || 'Gagal', 'error');
+    }
+
+    async function generateDefault() {
+        if (!confirm('Tambahkan kategori default yang belum ada? Kategori yang sudah ada tidak akan ditimpa.')) return;
+        const res = await fetch('/api/categories/generate-default', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) { showToast(`${data.added} kategori default berhasil ditambahkan`); setTimeout(() => location.reload(), 800); }
         else showToast(data.error || 'Gagal', 'error');
     }
 </script>

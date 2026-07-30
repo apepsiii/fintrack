@@ -151,6 +151,13 @@
                     </div>
                     <i class="ph ph-caret-right text-brand-muted"></i>
                 </button>
+                <button onclick="openResetModal()" class="w-full flex items-center justify-between p-3 hover:bg-white rounded-xl transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-500"><i class="ph ph-trash text-lg"></i></div>
+                        <span class="text-sm font-semibold text-brand-dark">Reset Data</span>
+                    </div>
+                    <i class="ph ph-caret-right text-brand-muted"></i>
+                </button>
             </div>
 
             <form action="/logout" method="POST">
@@ -380,6 +387,109 @@
 
             <button onclick="closeExportModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-brand-dark py-3.5 rounded-2xl font-bold text-sm transition">
                 Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Reset Data Modal -->
+    <div id="resetModalBackdrop" class="fixed inset-0 bg-brand-dark/60 z-[60] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="closeResetModal()"></div>
+    <div id="resetModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] z-[70] translate-y-full transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[92vh]">
+        <div class="p-6 pb-8">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <div class="flex flex-col items-center mb-5">
+                <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
+                    <i class="ph ph-warning text-2xl text-red-500"></i>
+                </div>
+                <h2 class="text-xl font-bold text-brand-dark">Reset Data</h2>
+                <p class="text-xs text-brand-muted text-center mt-1">Pilih data yang ingin dihapus. Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+
+            <div class="bg-gray-50 rounded-2xl p-2 mb-5 border border-gray-100 flex flex-col gap-1">
+                <label class="flex items-center gap-3 p-3 hover:bg-white rounded-xl transition cursor-pointer">
+                    <input type="checkbox" id="reset_transactions" class="w-4 h-4 accent-red-500 rounded">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-receipt text-lg text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark">Transaksi</p>
+                            <p class="text-[10px] text-brand-muted">Semua pemasukan & pengeluaran</p>
+                        </div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 hover:bg-white rounded-xl transition cursor-pointer">
+                    <input type="checkbox" id="reset_budgets" class="w-4 h-4 accent-red-500 rounded">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-chart-pie-slice text-lg text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark">Anggaran</p>
+                            <p class="text-[10px] text-brand-muted">Semua data limit anggaran</p>
+                        </div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 hover:bg-white rounded-xl transition cursor-pointer">
+                    <input type="checkbox" id="reset_savings" class="w-4 h-4 accent-red-500 rounded">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-9 h-9 rounded-xl bg-yellow-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-piggy-bank text-lg text-yellow-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark">Tabungan</p>
+                            <p class="text-[10px] text-brand-muted">Semua goals & riwayat tabungan</p>
+                        </div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 hover:bg-white rounded-xl transition cursor-pointer">
+                    <input type="checkbox" id="reset_categories" class="w-4 h-4 accent-red-500 rounded">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-tag text-lg text-orange-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark">Kategori Custom</p>
+                            <p class="text-[10px] text-brand-muted">Kategori buatan sendiri</p>
+                        </div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 hover:bg-white rounded-xl transition cursor-pointer">
+                    <input type="checkbox" id="reset_debts" class="w-4 h-4 accent-red-500 rounded">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-hand-coins text-lg text-red-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark">Hutang & Piutang</p>
+                            <p class="text-[10px] text-brand-muted">Semua data hutang & piutang</p>
+                        </div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 p-3 hover:bg-white rounded-xl transition cursor-pointer">
+                    <input type="checkbox" id="reset_recurring" class="w-4 h-4 accent-red-500 rounded">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+                            <i class="ph ph-repeat text-lg text-purple-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-brand-dark">Transaksi Berulang</p>
+                            <p class="text-[10px] text-brand-muted">Semua jadwal transaksi otomatis</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div id="resetConfirmBox" class="hidden bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+                <p class="text-xs font-bold text-red-600 mb-2">Konfirmasi Hapus</p>
+                <p class="text-[11px] text-red-500 mb-3">Ketik <span class="font-bold">HAPUS</span> untuk mengkonfirmasi.</p>
+                <input type="text" id="resetConfirmInput" placeholder="Ketik HAPUS" class="w-full bg-white border border-red-200 rounded-xl px-3 py-2.5 text-sm text-brand-dark focus:outline-none focus:border-red-400 transition">
+            </div>
+
+            <button id="btnResetConfirm" onclick="confirmReset()" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-2xl font-bold text-sm transition active:scale-95 flex items-center justify-center gap-2 mb-3">
+                <i class="ph ph-trash text-lg"></i> Hapus Data Dipilih
+            </button>
+            <button onclick="closeResetModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-brand-dark py-3.5 rounded-2xl font-bold text-sm transition">
+                Batal
             </button>
         </div>
     </div>
@@ -667,6 +777,84 @@
                 document.getElementById('importResultBackdrop').classList.remove('opacity-0');
                 document.getElementById('importResultModal').classList.remove('translate-y-full');
             }, 10);
+        }
+
+        function openResetModal() {
+            ['transactions','budgets','savings','categories','debts','recurring'].forEach(k => {
+                document.getElementById('reset_' + k).checked = false;
+            });
+            document.getElementById('resetConfirmInput').value = '';
+            document.getElementById('resetConfirmBox').classList.add('hidden');
+            document.getElementById('resetModalBackdrop').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('resetModalBackdrop').classList.remove('opacity-0');
+                document.getElementById('resetModal').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModalBackdrop').classList.add('opacity-0');
+            document.getElementById('resetModal').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('resetModalBackdrop').classList.add('hidden'), 300);
+        }
+
+        ['transactions','budgets','savings','categories','debts','recurring'].forEach(k => {
+            document.addEventListener('DOMContentLoaded', () => {
+                const cb = document.getElementById('reset_' + k);
+                if (cb) cb.addEventListener('change', updateResetConfirmBox);
+            });
+        });
+
+        function updateResetConfirmBox() {
+            const any = ['transactions','budgets','savings','categories','debts','recurring'].some(k =>
+                document.getElementById('reset_' + k).checked
+            );
+            document.getElementById('resetConfirmBox').classList.toggle('hidden', !any);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            ['transactions','budgets','savings','categories','debts','recurring'].forEach(k => {
+                const cb = document.getElementById('reset_' + k);
+                if (cb) cb.addEventListener('change', updateResetConfirmBox);
+            });
+        });
+
+        async function confirmReset() {
+            const keys = ['transactions','budgets','savings','categories','debts','recurring'];
+            const selected = keys.filter(k => document.getElementById('reset_' + k).checked);
+            if (selected.length === 0) {
+                showToast('Pilih minimal satu data untuk dihapus', 'error');
+                return;
+            }
+            const confirm = document.getElementById('resetConfirmInput').value.trim();
+            if (confirm !== 'HAPUS') {
+                showToast('Ketik HAPUS untuk konfirmasi', 'error');
+                return;
+            }
+            const btn = document.getElementById('btnResetConfirm');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>';
+            try {
+                const res = await fetch('/api/reset-data', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({targets: selected})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeResetModal();
+                    showToast('Data berhasil dihapus');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Gagal menghapus data', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph ph-trash text-lg"></i> Hapus Data Dipilih';
+                }
+            } catch(e) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-trash text-lg"></i> Hapus Data Dipilih';
+            }
         }
 
         function closeImportResult() {
