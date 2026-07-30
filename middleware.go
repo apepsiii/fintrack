@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +38,16 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Validate token
 		claims, err := authService.ValidateToken(tokenString)
 		if err != nil {
-			c.SetCookie("auth_token", "", -1, "/", "", false, true)
+			isSecure := os.Getenv("GIN_MODE") == "release"
+			http.SetCookie(c.Writer, &http.Cookie{
+				Name:     "auth_token",
+				Value:    "",
+				MaxAge:   -1,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   isSecure,
+				SameSite: http.SameSiteStrictMode,
+			})
 			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return

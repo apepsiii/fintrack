@@ -282,10 +282,7 @@ func CreateDefaultAdmin() error {
 		return err
 	}
 
-	log.Println("Default admin created successfully")
-	log.Println("Email: admin@fintrack.id")
-	log.Println("Password: admin123")
-	log.Println("⚠️  IMPORTANT: Change this password in production!")
+	log.Println("Default admin created: admin@fintrack.id (ubah password segera!)")
 
 	return nil
 }

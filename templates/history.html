@@ -276,35 +276,41 @@
                 const typeBg = trx.type === 'income' ? 'bg-brand-lime/20' : 'bg-red-50';
                 const sign = trx.type === 'income' ? '+' : '-';
 
+                const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+                const noteRow = trx.note ? `<div class="flex justify-between">
+                    <span class="text-xs text-brand-muted">Catatan</span>
+                    <span class="text-xs font-bold text-brand-dark">${esc(trx.note)}</span>
+                </div>` : '';
+
+                const receiptRow = trx.receipt_path ? `<div class="mb-4">
+                    <p class="text-xs font-bold text-brand-muted mb-2">Bukti / Struk</p>
+                    <a href="${esc(trx.receipt_path)}" target="_blank" rel="noopener noreferrer">
+                        <img src="${esc(trx.receipt_path)}" alt="struk" class="w-full rounded-2xl object-cover max-h-48 border border-gray-100">
+                    </a>
+                </div>` : '';
+
                 document.getElementById('detailContent').innerHTML = `
                     <div class="flex flex-col items-center mb-6">
                         <div class="w-16 h-16 rounded-2xl ${typeBg} flex items-center justify-center mb-3">
-                            <i class="ph ${trx.icon} text-3xl ${typeColor}"></i>
+                            <i class="ph ${esc(trx.icon)} text-3xl ${typeColor}"></i>
                         </div>
-                        <p class="text-3xl font-extrabold ${typeColor}">${sign}Rp ${trx.formatted_amount}</p>
-                        <p class="text-sm text-brand-muted mt-1">${trx.category}</p>
+                        <p class="text-3xl font-extrabold ${typeColor}">${sign}Rp ${esc(trx.formatted_amount)}</p>
+                        <p class="text-sm text-brand-muted mt-1">${esc(trx.category)}</p>
                     </div>
                     <div class="bg-gray-50 rounded-2xl p-4 flex flex-col gap-3 mb-4">
                         <div class="flex justify-between">
                             <span class="text-xs text-brand-muted">Tipe</span>
-                            <span class="text-xs font-bold text-brand-dark">${typeLabel}</span>
+                            <span class="text-xs font-bold text-brand-dark">${esc(typeLabel)}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-xs text-brand-muted">Tanggal</span>
-                            <span class="text-xs font-bold text-brand-dark">${trx.formatted_date}</span>
+                            <span class="text-xs font-bold text-brand-dark">${esc(trx.formatted_date)}</span>
                         </div>
-                        ${trx.note ? `<div class="flex justify-between">
-                            <span class="text-xs text-brand-muted">Catatan</span>
-                            <span class="text-xs font-bold text-brand-dark">${trx.note}</span>
-                        </div>` : ''}
+                        ${noteRow}
                     </div>
-                    ${trx.receipt_path ? `<div class="mb-4">
-                        <p class="text-xs font-bold text-brand-muted mb-2">Bukti / Struk</p>
-                        <a href="${trx.receipt_path}" target="_blank">
-                            <img src="${trx.receipt_path}" alt="struk" class="w-full rounded-2xl object-cover max-h-48 border border-gray-100">
-                        </a>
-                    </div>` : ''}
-                    <button onclick="deleteTransaction(${trx.id})" class="w-full flex items-center justify-center gap-2 p-4 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl transition font-bold text-sm">
+                    ${receiptRow}
+                    <button onclick="deleteTransaction(${parseInt(trx.id)})" class="w-full flex items-center justify-center gap-2 p-4 bg-red-50 hover:bg-red-100 text-red-500 rounded-2xl transition font-bold text-sm">
                         <i class="ph ph-trash text-lg"></i> Hapus Transaksi
                     </button>
                 `;

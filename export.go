@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -472,5 +473,5 @@ func getAvatarURL(u *User) string {
 	if u.Avatar != "" {
 		return u.Avatar
 	}
-	return "https://ui-avatars.com/api/?name=" + u.Name + "&background=c3f545&color=01381b&rounded=true&bold=true"
+	return "https://ui-avatars.com/api/?name=" + url.QueryEscape(u.Name) + "&background=c3f545&color=01381b&rounded=true&bold=true"
 }

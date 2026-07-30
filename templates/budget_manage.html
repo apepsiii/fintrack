@@ -182,23 +182,25 @@
                     return;
                 }
 
+                const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
                 container.innerHTML = budgets.map(budget => `
                     <div class="bg-white border border-gray-100 rounded-2xl p-4 mb-4 hover:shadow-lg transition">
                         <div class="flex justify-between items-start mb-3">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-xl bg-brand-lime/20 flex items-center justify-center">
-                                    <i class="ph ${budget.icon} text-xl text-brand-dark"></i>
+                                    <i class="ph ${esc(budget.icon)} text-xl text-brand-dark"></i>
                                 </div>
                                 <div>
-                                    <span class="text-base font-bold text-brand-dark block">${budget.category_name}</span>
-                                    <span class="text-xs text-brand-muted">${budget.month_year}</span>
+                                    <span class="text-base font-bold text-brand-dark block">${esc(budget.category_name)}</span>
+                                    <span class="text-xs text-brand-muted">${esc(budget.month_year)}</span>
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="editBudget(${budget.id})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition">
+                                <button onclick="editBudget(${parseInt(budget.id)})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition">
                                     <i class="ph ph-pencil-simple text-sm"></i>
                                 </button>
-                                <button onclick="deleteBudget(${budget.id})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition">
+                                <button onclick="deleteBudget(${parseInt(budget.id)})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition">
                                     <i class="ph ph-trash text-sm"></i>
                                 </button>
                             </div>

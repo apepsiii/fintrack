@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	url_pkg "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -234,6 +235,15 @@ func main() {
 
 	router := gin.Default()
 
+	// L-2: Security headers middleware
+	router.Use(func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		c.Next()
+	})
+
 	// Load templates from embedded FS
 	templ, err := parseEmbeddedTemplates()
 	if err != nil {
@@ -275,15 +285,16 @@ func main() {
 		}
 
 		// Set token as HTTP-only cookie
-		c.SetCookie(
-			"auth_token",
-			token,
-			86400,    // 24 hours
-			"/",
-			"",
-			false,    // Set to true in production with HTTPS
-			true,     // HTTP-only
-		)
+		isSecure := os.Getenv("GIN_MODE") == "release"
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "auth_token",
+			Value:    token,
+			MaxAge:   86400,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   isSecure,
+			SameSite: http.SameSiteStrictMode,
+		})
 
 		c.Redirect(http.StatusFound, "/")
 	})
@@ -301,7 +312,7 @@ func main() {
 			return
 		}
 
-		if len(password) < 6 {
+		if len(password) < 8 {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Password minimal 6 karakter",
 			})
@@ -344,7 +355,16 @@ func main() {
 	})
 
 	router.POST("/logout", func(c *gin.Context) {
-		c.SetCookie("auth_token", "", -1, "/", "", false, true)
+		isSecure := os.Getenv("GIN_MODE") == "release"
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "auth_token",
+			Value:    "",
+			MaxAge:   -1,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   isSecure,
+			SameSite: http.SameSiteStrictMode,
+		})
 		c.Redirect(http.StatusFound, "/login")
 	})
 
@@ -497,10 +517,34 @@ func main() {
 		note := c.PostForm("note")
 		dateStr := c.PostForm("date")
 
+		// M-4: Validasi tipe transaksi
+		if trxType != "income" && trxType != "expense" {
+			c.Redirect(http.StatusFound, "/?error=invalid_type")
+			return
+		}
+
 		var receiptPath string
 		file, header, err := c.Request.FormFile("receipt_image")
 		if err == nil && header != nil {
 			defer file.Close()
+
+			// H-6: Validasi MIME type via magic bytes
+			buff := make([]byte, 512)
+			n, _ := file.Read(buff)
+			mimeType := http.DetectContentType(buff[:n])
+			allowed := map[string]bool{
+				"image/jpeg": true,
+				"image/png":  true,
+				"image/webp": true,
+				"image/gif":  true,
+			}
+			if !allowed[mimeType] {
+				c.Redirect(http.StatusFound, "/?error=invalid_file")
+				return
+			}
+			// Reset file pointer setelah read
+			file.Seek(0, 0)
+
 			uploadDir := "./static/uploads"
 			os.MkdirAll(uploadDir, 0755)
 			ext := filepath.Ext(header.Filename)
@@ -940,7 +984,7 @@ func main() {
 
 		avatar := user.Avatar
 		if avatar == "" {
-			avatar = "https://ui-avatars.com/api/?name=" + user.Name + "&background=c3f545&color=01381b&rounded=true&bold=true"
+			avatar = "https://ui-avatars.com/api/?name=" + url_pkg.QueryEscape(user.Name) + "&background=c3f545&color=01381b&rounded=true&bold=true"
 		}
 
 		c.HTML(http.StatusOK, "profile.html", gin.H{
@@ -986,8 +1030,8 @@ func main() {
 		}
 
 		if newPassword != "" {
-			if len(newPassword) < 6 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Password baru minimal 6 karakter"})
+			if len(newPassword) < 8 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Password baru minimal 8 karakter"})
 				return
 			}
 			newHash, err := authSvc.HashPassword(newPassword)
@@ -1018,7 +1062,7 @@ func main() {
 			return
 		}
 		user, _ := GetCurrentUser(c)
-		url := fmt.Sprintf("https://ui-avatars.com/api/?name=%s&background=%s&color=ffffff&rounded=true&bold=true&size=200", user.Name, colors[req.Index])
+		url := fmt.Sprintf("https://ui-avatars.com/api/?name=%s&background=%s&color=ffffff&rounded=true&bold=true&size=200", url_pkg.QueryEscape(user.Name), colors[req.Index])
 		db.Exec("UPDATE users SET avatar=? WHERE id=?", url, userID)
 		c.JSON(http.StatusOK, gin.H{"avatar": url, "message": "Avatar berhasil diperbarui"})
 	})
@@ -1034,6 +1078,23 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "File maksimal 2MB"})
 			return
 		}
+
+		// H-6: Validasi MIME type via magic bytes
+		src, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca file"})
+			return
+		}
+		defer src.Close()
+		buff := make([]byte, 512)
+		n, _ := src.Read(buff)
+		mimeType := http.DetectContentType(buff[:n])
+		allowed := map[string]bool{"image/jpeg": true, "image/png": true, "image/webp": true, "image/gif": true}
+		if !allowed[mimeType] {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Hanya file gambar (JPG, PNG, WebP) yang diizinkan"})
+			return
+		}
+
 		ext := filepath.Ext(file.Filename)
 		filename := fmt.Sprintf("avatar_%d_%d%s", userID, time.Now().Unix(), ext)
 		savePath := filepath.Join("static", "avatars", filename)

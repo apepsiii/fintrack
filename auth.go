@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -38,7 +39,7 @@ type AuthService struct {
 func NewAuthService() *AuthService {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		secret = "fintrack-dev-secret-key-2026" // Default for development
+		log.Fatal("JWT_SECRET environment variable must be set")
 	}
 
 	expiryHours := 24

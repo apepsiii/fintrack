@@ -74,7 +74,7 @@ func (s *OCRService) ScanReceipt(file multipart.File, categories []Category) (*O
 		return nil, errors.New("no text found in image")
 	}
 
-	log.Printf("=== OCR RAW TEXT ===\n%s\n===================", rawText)
+	log.Printf("OCR parsed: store=%q items=%d total=%d", rawText[:min(30, len(rawText))], 0, 0)
 
 	ai := NewAIService()
 	if ai.IsConfigured() {
