@@ -55,24 +55,41 @@ install_app() {
         exit 1
     fi
 
-    # Pastikan .env ada
-    if [ ! -f "$APP_DIR/.env" ]; then
-        if [ -f "$APP_DIR/.env.example" ]; then
-            cp "$APP_DIR/.env.example" "$APP_DIR/.env"
-            echo "[INFO] .env dibuat dari .env.example"
-            echo "       PENTING: Edit $APP_DIR/.env dan isi JWT_SECRET dengan nilai acak!"
-            echo ""
-        else
-            echo "[WARN] .env tidak ditemukan. App mungkin tidak berjalan optimal."
-        fi
-    fi
-
     read -p "Port aplikasi [8080]: " PORT
     PORT="${PORT:-8080}"
 
     # Buat folder yang diperlukan
     mkdir -p "$APP_DIR/static/uploads"
     mkdir -p "$APP_DIR/static/avatars"
+
+    # Pastikan .env ada
+    if [ ! -f "$APP_DIR/.env" ]; then
+        if [ -f "$APP_DIR/.env.example" ]; then
+            cp "$APP_DIR/.env.example" "$APP_DIR/.env"
+            echo "[INFO] .env dibuat dari .env.example"
+        else
+            # Buat .env minimal
+            cat > "$APP_DIR/.env" <<ENVEOF
+SERVER_PORT=${PORT}
+JWT_SECRET=$(openssl rand -hex 32)
+DB_PATH=./finance.db
+GIN_MODE=release
+BCRYPT_COST=10
+JWT_EXPIRY_HOURS=24
+ENVEOF
+            echo "[INFO] .env minimal dibuat otomatis"
+        fi
+    fi
+
+    # Set port di .env
+    sed -i "s/^SERVER_PORT=.*/SERVER_PORT=${PORT}/" "$APP_DIR/.env"
+
+    # Pastikan JWT_SECRET tidak kosong
+    if grep -q "JWT_SECRET=$" "$APP_DIR/.env" || grep -q "JWT_SECRET=your" "$APP_DIR/.env"; then
+        NEW_SECRET=$(openssl rand -hex 32)
+        sed -i "s/^JWT_SECRET=.*/JWT_SECRET=${NEW_SECRET}/" "$APP_DIR/.env"
+        echo "[INFO] JWT_SECRET di-generate otomatis"
+    fi
 
     chmod +x "$APP_DIR/$BINARY"
 
