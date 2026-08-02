@@ -456,7 +456,8 @@
         }, 3000);
     }
 
-    document.getElementById('transactionForm').addEventListener('submit', function(e) {
+    document.getElementById('transactionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
         const btn = e.submitter;
         if (!btn) return;
 
@@ -470,7 +471,6 @@
             saldoErrorMsg.textContent = 'Nominal harus lebih dari 0.';
             saldoError.classList.remove('hidden');
             saldoError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            e.preventDefault();
             return;
         }
 
@@ -481,7 +481,6 @@
                 saldoErrorMsg.textContent = `Saldo tidak mencukupi. Tersedia: Rp ${formatted}`;
                 saldoError.classList.remove('hidden');
                 saldoError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                e.preventDefault();
                 return;
             }
         }
@@ -489,8 +488,33 @@
         const orig = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>';
-        setTimeout(() => { btn.disabled = false; btn.innerHTML = orig; }, 3000);
-        closeTransactionModal();
+
+        const formData = new FormData(this);
+        formData.set('type', btn.value);
+
+        try {
+            const res = await fetch('/transaction', { method: 'POST', body: formData });
+            if (res.redirected) {
+                const url = new URL(res.url);
+                const error = url.searchParams.get('error');
+                if (error === 'saldo_kurang') {
+                    const balanceRaw = parseInt(document.getElementById('balanceRaw').value) || 0;
+                    const formatted = new Intl.NumberFormat('id-ID').format(balanceRaw);
+                    saldoErrorMsg.textContent = `Saldo tidak mencukupi. Tersedia: Rp ${formatted}`;
+                    saldoError.classList.remove('hidden');
+                    saldoError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    btn.disabled = false;
+                    btn.innerHTML = orig;
+                    return;
+                }
+                closeTransactionModal();
+                window.location.href = res.url;
+            }
+        } catch(err) {
+            btn.disabled = false;
+            btn.innerHTML = orig;
+            showToast('Terjadi kesalahan, coba lagi', 'error');
+        }
     });
 
     function previewReceipt(input) {
