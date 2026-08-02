@@ -494,22 +494,25 @@
 
         try {
             const res = await fetch('/transaction', { method: 'POST', body: formData });
-            if (res.redirected) {
-                const url = new URL(res.url);
-                const error = url.searchParams.get('error');
-                if (error === 'saldo_kurang') {
-                    const balanceRaw = parseInt(document.getElementById('balanceRaw').value) || 0;
-                    const formatted = new Intl.NumberFormat('id-ID').format(balanceRaw);
+            const data = await res.json();
+
+            if (!res.ok) {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (data.error === 'saldo_kurang') {
+                    const formatted = new Intl.NumberFormat('id-ID').format(data.saldo || 0);
                     saldoErrorMsg.textContent = `Saldo tidak mencukupi. Tersedia: Rp ${formatted}`;
                     saldoError.classList.remove('hidden');
                     saldoError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    btn.disabled = false;
-                    btn.innerHTML = orig;
-                    return;
+                } else {
+                    showToast(data.error || 'Gagal menyimpan transaksi', 'error');
                 }
-                closeTransactionModal();
-                window.location.href = res.url;
+                return;
             }
+
+            closeTransactionModal();
+            showToast('Transaksi berhasil dicatat!');
+            setTimeout(() => window.location.reload(), 800);
         } catch(err) {
             btn.disabled = false;
             btn.innerHTML = orig;

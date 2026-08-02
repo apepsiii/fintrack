@@ -580,7 +580,7 @@ func main() {
 				amountInt, _ := strconv.Atoi(amount)
 				saldo := totalIncome - totalExpense
 				if saldo < amountInt {
-					c.Redirect(http.StatusFound, "/?error=saldo_kurang")
+					c.JSON(http.StatusBadRequest, gin.H{"error": "saldo_kurang", "saldo": saldo})
 					return
 				}
 			}
@@ -589,7 +589,7 @@ func main() {
 				VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''))`,
 				userID, trxType, amount, categoryID, note, parsedDate.Format("2006-01-02 15:04:05"), receiptPath)
 		}
-		c.Redirect(http.StatusFound, "/?saved=1")
+		c.JSON(http.StatusOK, gin.H{"success": true})
 	})
 
 	protected.GET("/stats", func(c *gin.Context) {
