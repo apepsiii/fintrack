@@ -2,7 +2,7 @@
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c3f545">
     <title>Transaksi Berulang - FinTrack</title>
     <link rel="manifest" href="/static/manifest.json">
@@ -14,10 +14,10 @@
             theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] }, colors: { brand: { lime:'#c3f545', limeDark:'#a3d124', dark:'#01381b', muted:'#809b8d' } } } }
         }
     </script>
-    <style>body{background:#f1f5f9}::-webkit-scrollbar{display:none}.fab-shadow{box-shadow:0 -4px 20px rgba(195,245,69,.2)}</style>
+    <style>body{background:#f1f5f9}::-webkit-scrollbar{display:none}:root{--nav-height:calc(64px + env(safe-area-inset-bottom))}body{height:100dvh}.nav-safe{padding-bottom:env(safe-area-inset-bottom)}.fab-shadow{box-shadow:0 -4px 20px rgba(195,245,69,.2)}</style>
 </head>
 <body class="flex justify-center min-h-screen sm:py-8">
-<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
 
     <header class="pt-8 px-6 flex justify-between items-center mb-4">
         <div class="flex items-center gap-3">
@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    <section class="px-6 pb-28 flex-1 overflow-y-auto">
+    <section class="px-6 pb-32 flex-1 overflow-y-auto">
         {{ if .Recurring }}
         <div class="flex flex-col gap-3">
             {{ range .Recurring }}
@@ -86,7 +86,7 @@
         {{ end }}
     </section>
 
-    <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pt-2 px-6 pb-6 mt-auto z-50">
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-brand-dark rounded-t-3xl pt-2 px-6 nav-safe z-50">
         <div class="flex justify-between items-center relative">
             <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-house text-2xl"></i><span class="text-[9px]">Beranda</span></a>
             <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-chart-bar text-2xl"></i><span class="text-[9px]">Statistik</span></a>

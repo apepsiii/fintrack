@@ -2,7 +2,7 @@
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c3f545">
     <title>FinBot AI - FinTrack</title>
     <link rel="manifest" href="/static/manifest.json">
@@ -16,6 +16,9 @@
     </script>
     <style>
         body{background:#f1f5f9}::-webkit-scrollbar{display:none}
+        :root{--nav-height:calc(64px + env(safe-area-inset-bottom))}
+        body{height:100dvh}
+        .nav-safe{padding-bottom:env(safe-area-inset-bottom)}
         .fab-shadow{box-shadow:0 -4px 20px rgba(195,245,69,.2)}
         .chat-bubble p { margin-bottom: 0.5rem; }
         .chat-bubble ul { list-style: disc; padding-left: 1.2rem; margin-bottom: 0.5rem; }
@@ -27,7 +30,7 @@
     </style>
 </head>
 <body class="flex justify-center min-h-screen sm:py-8">
-<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
 
     <header class="pt-8 px-6 flex justify-between items-center mb-2 shrink-0">
         <div class="flex items-center gap-3">
@@ -78,7 +81,7 @@
     </div>
 
     <!-- Input Area -->
-    <div class="px-4 pb-24 shrink-0">
+    <div class="px-4 pb-32 shrink-0">
         <div class="flex gap-2 items-end bg-gray-50 border border-gray-200 rounded-2xl p-2">
             <textarea id="msgInput" placeholder="{{ if .AIConfigured }}Tanya FinBot...{{ else }}Konfigurasi AI dulu di .env{{ end }}"
                 {{ if not .AIConfigured }}disabled{{ end }}
@@ -94,7 +97,7 @@
         <p class="text-[9px] text-brand-muted text-center mt-1.5">FinBot dapat membuat kesalahan. Verifikasi informasi penting.</p>
     </div>
 
-    <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pt-2 px-6 pb-6 z-50">
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-brand-dark rounded-t-3xl pt-2 px-6 nav-safe z-50">
         <div class="flex justify-between items-center relative">
             <a href="/" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-house text-2xl"></i><span class="text-[9px]">Beranda</span></a>
             <a href="/stats" class="flex flex-col items-center gap-1.5 w-10 text-white/50 hover:text-white transition"><i class="ph ph-chart-bar text-2xl"></i><span class="text-[9px]">Statistik</span></a>

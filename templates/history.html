@@ -2,7 +2,7 @@
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c3f545">
     <title>Riwayat Transaksi - FinTrack</title>
     <link rel="manifest" href="/static/manifest.json">
@@ -27,11 +27,14 @@
     <style>
         body { background-color: #f1f5f9; }
         ::-webkit-scrollbar { display: none; }
+        :root { --nav-height: calc(64px + env(safe-area-inset-bottom)); }
+        body { height: 100dvh; }
+        .nav-safe { padding-bottom: env(safe-area-inset-bottom); }
         .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
     </style>
 </head>
 <body hx-boost="true" class="flex justify-center min-h-screen sm:py-8">
-    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+        <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
 
         <header class="pt-8 px-6 flex justify-between items-center mb-4">
             <div class="flex items-center gap-3">
@@ -81,7 +84,7 @@
         </div>
 
         <!-- Transaction List -->
-        <section class="px-6 pb-28 flex-1 overflow-y-auto">
+        <section class="px-6 pb-32 flex-1 overflow-y-auto">
             {{ if .Transactions }}
                 {{ $currentDate := "" }}
                 {{ range .Transactions }}
@@ -162,7 +165,7 @@
             {{ end }}
         </section>
 
-        <nav class="absolute bottom-0 w-full bg-brand-dark rounded-t-3xl pb-safe pt-2 px-6 pb-6 mt-auto z-50">
+        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-brand-dark rounded-t-3xl pt-2 px-6 nav-safe z-50">
             <div class="flex justify-between items-center relative">
                 <a href="/" class="flex flex-col items-center gap-1.5 w-12 text-white">
                     <i class="ph-fill ph-house text-2xl"></i>
