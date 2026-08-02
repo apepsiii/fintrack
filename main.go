@@ -380,20 +380,21 @@ func main() {
 
 		currentMonth := nowWIB().Format("2006-01")
 
+		// Saldo = semua waktu
 		var totalIncome int
-		db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income' AND user_id = ? AND substr(date, 1, 7) = ?", userID, currentMonth).Scan(&totalIncome)
+		db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income' AND user_id = ?", userID).Scan(&totalIncome)
 
 		var totalExpense int
-		db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND user_id = ? AND substr(date, 1, 7) = ?", userID, currentMonth).Scan(&totalExpense)
+		db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND user_id = ?", userID).Scan(&totalExpense)
 
 		balance := totalIncome - totalExpense
 
+		// Ringkasan bulan ini
+		var monthlyIncome int
+		db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income' AND user_id = ? AND substr(date, 1, 7) = ?", userID, currentMonth).Scan(&monthlyIncome)
+
 		var monthlyExpense int
-		db.QueryRow(`
-			SELECT COALESCE(SUM(amount), 0) 
-			FROM transactions 
-			WHERE type = 'expense' AND user_id = ? AND substr(date, 1, 7) = ?
-		`, userID, currentMonth).Scan(&monthlyExpense)
+		db.QueryRow("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND user_id = ? AND substr(date, 1, 7) = ?", userID, currentMonth).Scan(&monthlyExpense)
 
 		rows, err := db.Query(`
 			SELECT t.id, t.type, t.amount, t.date, c.name, c.icon, COALESCE(t.note, '')
@@ -582,12 +583,11 @@ func main() {
 				parsedDate = nowWIB()
 			}
 
-			// Validasi saldo untuk expense (bulan ini)
+			// Validasi saldo untuk expense (semua waktu)
 			if trxType == "expense" {
-				currentMonth := nowWIB().Format("2006-01")
 				var totalIncome, totalExpense int
-				db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='income' AND substr(date,1,7)=?", userID, currentMonth).Scan(&totalIncome)
-				db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='expense' AND substr(date,1,7)=?", userID, currentMonth).Scan(&totalExpense)
+				db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='income'", userID).Scan(&totalIncome)
+				db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='expense'", userID).Scan(&totalExpense)
 				amountInt, _ := strconv.Atoi(amount)
 				saldo := totalIncome - totalExpense
 				if saldo < amountInt {
