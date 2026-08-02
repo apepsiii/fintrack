@@ -208,6 +208,9 @@ func main() {
 		log.Println("No .env file found, using defaults")
 	}
 
+	initLogger()
+	defer closeLogger()
+
 	initDB()
 	defer db.Close()
 
@@ -523,9 +526,22 @@ func main() {
 		categoryID := c.PostForm("category_id")
 		note := c.PostForm("note")
 		dateStr := c.PostForm("date")
+		idempotencyKey := c.PostForm("idempotency_key")
+
+		// Cek idempotency key — cegah duplikasi
+		if idempotencyKey != "" {
+			var exists int
+			db.QueryRow("SELECT COUNT(*) FROM transactions WHERE user_id=? AND idempotency_key=?", userID, idempotencyKey).Scan(&exists)
+			if exists > 0 {
+				logWarn("Duplicate transaction blocked user=%d key=%s", userID, idempotencyKey)
+				c.JSON(http.StatusOK, gin.H{"success": true, "duplicate": true})
+				return
+			}
+		}
 
 		// M-4: Validasi tipe transaksi
 		if trxType != "income" && trxType != "expense" {
+			logWarn("Invalid transaction type user=%d type=%s", userID, trxType)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Tipe transaksi tidak valid"})
 			return
 		}
@@ -600,9 +616,10 @@ func main() {
 				}
 			}
 
-			db.Exec(`INSERT INTO transactions (user_id, type, amount, category_id, note, date, receipt_path)
-				VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''))`,
-				userID, trxType, amount, categoryID, note, parsedDate.Format("2006-01-02 15:04:05"), receiptPath)
+			db.Exec(`INSERT INTO transactions (user_id, type, amount, category_id, note, date, receipt_path, idempotency_key)
+				VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''))`,
+				userID, trxType, amount, categoryID, note, parsedDate.Format("2006-01-02 15:04:05"), receiptPath, idempotencyKey)
+			logTx(userID, trxType, categoryID, amount, note)
 		}
 		c.JSON(http.StatusOK, gin.H{"success": true})
 	})

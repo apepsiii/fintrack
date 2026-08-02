@@ -211,6 +211,14 @@ func RunMigrations(db *sql.DB) error {
 				ALTER TABLE debts ADD COLUMN linked_transaction_id INTEGER;
 			`,
 		},
+		{
+			version: 11,
+			name:    "add_idempotency_key_to_transactions",
+			sql: `
+				ALTER TABLE transactions ADD COLUMN idempotency_key TEXT;
+				CREATE INDEX IF NOT EXISTS idx_transactions_idempotency ON transactions(user_id, idempotency_key);
+			`,
+		},
 	}
 
 	// Get current migration version

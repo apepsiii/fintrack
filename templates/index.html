@@ -255,8 +255,9 @@
             <div class="relative flex gap-2 items-center">
                 <div class="relative flex-1">
                     <span class="absolute left-5 top-1/2 -translate-y-1/2 text-brand-dark/40 font-bold text-xl">Rp</span>
-                    <input type="number" name="amount" id="amountInput" placeholder="0" required
+                    <input type="text" inputmode="numeric" id="amountDisplay" placeholder="0" autocomplete="off"
                         class="w-full bg-gray-50 border border-gray-100 text-brand-dark text-3xl font-bold rounded-2xl pl-14 pr-4 py-5 focus:outline-none focus:border-brand-lime focus:ring-4 focus:ring-brand-lime/20 transition placeholder-gray-300">
+                    <input type="hidden" name="amount" id="amountInput">
                 </div>
                 <label for="ocrInput" class="w-14 h-[72px] bg-brand-dark text-brand-lime rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#024a24] transition active:scale-95 shrink-0">
                     <i class="ph ph-scan text-2xl mb-1"></i>
@@ -423,9 +424,15 @@
         navigator.serviceWorker.register('/static/service-worker.js').catch(() => {});
     }
 
+    let _txKey = null;
+
     function openTransactionModal() {
         const now = new Date();
         document.getElementById('dateInput').value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+        document.getElementById('amountDisplay').value = '';
+        document.getElementById('amountInput').value = '';
+        document.getElementById('saldoError').classList.add('hidden');
+        _txKey = Date.now() + '_' + Math.random().toString(36).slice(2);
         document.getElementById('trxModalBackdrop').classList.remove('hidden');
         setTimeout(() => {
             document.getElementById('trxModalBackdrop').classList.remove('opacity-0');
@@ -490,9 +497,9 @@
         btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>';
 
         const formData = new FormData(this);
-        formData.set('type', btn.value);
         formData.delete('type');
         formData.append('type', btn.value);
+        formData.append('idempotency_key', _txKey);
 
         try {
             const res = await fetch('/transaction', { method: 'POST', body: formData });
@@ -512,6 +519,7 @@
                 return;
             }
 
+            _txKey = null;
             closeTransactionModal();
             showToast('Transaksi berhasil dicatat!');
             setTimeout(() => window.location.href = '/', 800);
@@ -703,7 +711,38 @@
         showToast('Data struk berhasil diterapkan');
     }
 
-    function updateSubmitButtons() {
+    // Format nominal input
+    function formatRupiahInput(val) {
+        const num = val.replace(/\D/g, '');
+        return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const display = document.getElementById('amountDisplay');
+        const hidden = document.getElementById('amountInput');
+
+        display.addEventListener('input', () => {
+            const raw = display.value.replace(/\D/g, '');
+            display.value = raw ? formatRupiahInput(raw) : '';
+            hidden.value = raw;
+        });
+
+        display.addEventListener('keydown', (e) => {
+            // Allow: backspace, delete, tab, escape, enter, arrows
+            const allowed = ['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+            if (allowed.includes(e.key)) return;
+            // Block non-numeric
+            if (!/^\d$/.test(e.key)) e.preventDefault();
+        });
+
+        display.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pasted = (e.clipboardData || window.clipboardData).getData('text');
+            const raw = pasted.replace(/\D/g, '');
+            display.value = formatRupiahInput(raw);
+            hidden.value = raw;
+        });
+    });
         const select = document.getElementById('categorySelect');
         const selected = select.options[select.selectedIndex];
         const catType = selected ? selected.getAttribute('data-type') : null;
