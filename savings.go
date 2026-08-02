@@ -237,9 +237,16 @@ func RegisterSavingsRoutes(protected *gin.RouterGroup) {
 			}
 		}
 
+		// Hitung saldo utama user
+		var totalIncome, totalExpense int
+		db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='income'", userID).Scan(&totalIncome)
+		db.QueryRow("SELECT COALESCE(SUM(amount),0) FROM transactions WHERE user_id=? AND type='expense'", userID).Scan(&totalExpense)
+		balanceRaw := totalIncome - totalExpense
+
 		c.HTML(http.StatusOK, "savings_detail.html", gin.H{
 			"Savings":      s,
 			"Transactions": transactions,
+			"BalanceRaw":   balanceRaw,
 		})
 	})
 

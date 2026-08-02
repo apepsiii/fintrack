@@ -28,7 +28,7 @@
     </style>
 </head>
 <body class="flex justify-center min-h-screen sm:py-8">
-    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-screen sm:h-auto">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
 
         <!-- Header -->
         <header class="pt-8 px-6 flex justify-between items-center mb-4">
@@ -159,7 +159,12 @@
         <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
         <h2 id="txModalTitle" class="text-xl font-bold text-brand-dark mb-5 text-center">Setor Dana</h2>
 
-        <form id="txForm" class="flex flex-col gap-4 pb-4">
+        <div id="txError" class="hidden bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-center gap-2 mb-4">
+            <i class="ph ph-warning-circle text-red-500 text-lg shrink-0"></i>
+            <p class="text-sm font-semibold text-red-600" id="txErrorMsg"></p>
+        </div>
+
+        <form id="txForm" class="flex flex-col gap-4 pb-4" onsubmit="return false;">
             <input type="hidden" id="txType" name="type" value="deposit">
 
             <div class="relative">
@@ -232,6 +237,8 @@
 
     <script>
         const SAVINGS_ID = {{ .Savings.ID }};
+        const BALANCE_RAW = {{ .BalanceRaw }};
+        const SAVINGS_CURRENT = {{ .Savings.CurrentAmount }};
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -259,6 +266,7 @@
             document.getElementById('txModalTitle').textContent = type === 'deposit' ? 'Setor Dana' : 'Tarik Dana';
             document.getElementById('btnTxSubmit').textContent = type === 'deposit' ? 'Konfirmasi Setoran' : 'Konfirmasi Penarikan';
             document.getElementById('txAmount').value = '';
+            document.getElementById('txError').classList.add('hidden');
 
             const backdrop = document.getElementById('txBackdrop');
             const modal = document.getElementById('txModal');
@@ -269,6 +277,7 @@
         function closeTxModal() {
             document.getElementById('txBackdrop').classList.add('opacity-0');
             document.getElementById('txModal').classList.add('translate-y-full');
+            document.getElementById('txError').classList.add('hidden');
             setTimeout(() => document.getElementById('txBackdrop').classList.add('hidden'), 300);
         }
 
@@ -303,6 +312,33 @@
             e.preventDefault();
             const btn = document.getElementById('btnTxSubmit');
             const origText = btn.textContent;
+            const txType = document.getElementById('txType').value;
+            const amount = parseInt(document.getElementById('txAmount').value) || 0;
+            const txError = document.getElementById('txError');
+            const txErrorMsg = document.getElementById('txErrorMsg');
+
+            txError.classList.add('hidden');
+
+            if (amount <= 0) {
+                txErrorMsg.textContent = 'Nominal harus lebih dari 0.';
+                txError.classList.remove('hidden');
+                return;
+            }
+
+            if (txType === 'deposit' && amount > BALANCE_RAW) {
+                const formatted = new Intl.NumberFormat('id-ID').format(BALANCE_RAW);
+                txErrorMsg.textContent = `Saldo tidak mencukupi. Tersedia: Rp ${formatted}`;
+                txError.classList.remove('hidden');
+                return;
+            }
+
+            if (txType === 'withdraw' && amount > SAVINGS_CURRENT) {
+                const formatted = new Intl.NumberFormat('id-ID').format(SAVINGS_CURRENT);
+                txErrorMsg.textContent = `Saldo tabungan tidak mencukupi. Tersedia: Rp ${formatted}`;
+                txError.classList.remove('hidden');
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i>';
 
@@ -312,15 +348,17 @@
                 const data = await res.json();
                 if (res.ok) {
                     closeTxModal();
-                    showToast(data.message);
+                    showToast(data.message || 'Transaksi berhasil');
                     setTimeout(() => window.location.reload(), 800);
                 } else {
-                    showToast(data.error || 'Terjadi kesalahan', 'error');
+                    txErrorMsg.textContent = data.error || 'Terjadi kesalahan';
+                    txError.classList.remove('hidden');
                     btn.disabled = false;
                     btn.textContent = origText;
                 }
             } catch (err) {
-                showToast('Terjadi kesalahan', 'error');
+                txErrorMsg.textContent = 'Terjadi kesalahan, coba lagi';
+                txError.classList.remove('hidden');
                 btn.disabled = false;
                 btn.textContent = origText;
             }
