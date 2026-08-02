@@ -244,6 +244,10 @@ func main() {
 		c.Next()
 	})
 
+	router.NoRoute(func(c *gin.Context) {
+		c.HTML(http.StatusNotFound, "404.html", nil)
+	})
+
 	// Load templates from embedded FS
 	templ, err := parseEmbeddedTemplates()
 	if err != nil {

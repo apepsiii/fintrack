@@ -514,7 +514,7 @@
 
             closeTransactionModal();
             showToast('Transaksi berhasil dicatat!');
-            setTimeout(() => window.location.reload(), 800);
+            setTimeout(() => window.location.href = '/', 800);
         } catch(err) {
             btn.disabled = false;
             btn.innerHTML = orig;
