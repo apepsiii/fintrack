@@ -26,6 +26,12 @@ var envExample []byte
 func parseEmbeddedTemplates() (*template.Template, error) {
 	tmpl := template.New("").Funcs(template.FuncMap{
 		"not": func(b bool) bool { return !b },
+		"initials": func(s string) string {
+			if len(s) == 0 {
+				return "?"
+			}
+			return string([]rune(s)[:1])
+		},
 	})
 	return tmpl.ParseFS(embeddedTemplates, "templates/*.html")
 }

@@ -19,6 +19,7 @@ type User struct {
 	PasswordHash string    `json:"-"`
 	Avatar       string    `json:"avatar"`
 	CreatedAt    time.Time `json:"created_at"`
+	IsAdmin      bool      `json:"is_admin"`
 }
 
 // Claims represents JWT claims
@@ -183,14 +184,16 @@ func AuthenticateUser(email, password string) (*User, error) {
 // GetUserByID retrieves a user by ID
 func GetUserByID(userID int) (*User, error) {
 	var user User
+	var isAdmin int
 	err := db.QueryRow(`
-		SELECT id, name, email, COALESCE(avatar,''), created_at
+		SELECT id, name, email, COALESCE(avatar,''), created_at, COALESCE(is_admin, 0)
 		FROM users WHERE id = ?
-	`, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt)
+	`, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Avatar, &user.CreatedAt, &isAdmin)
 
 	if err != nil {
 		return nil, err
 	}
+	user.IsAdmin = isAdmin == 1
 
 	return &user, nil
 }

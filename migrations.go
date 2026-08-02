@@ -220,6 +220,13 @@ func RunMigrations(db *sql.DB) error {
 			`,
 		},
 		{
+			version: 13,
+			name:    "add_is_admin_to_users",
+			sql: `
+				ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
+			`,
+		},
+		{
 			version: 12,
 			name:    "create_subscriptions_table",
 			sql: `

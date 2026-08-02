@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Admin Dashboard - FinTrack">
+    <meta name="theme-color" content="#c3f545">
+    <title>Admin Dashboard - FinTrack</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', dark: '#01381b', light: '#f8faf7', muted: '#809b8d', limeDark: '#a8d93e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div class="flex justify-center min-h-screen">
+        <main class="w-full max-w-5xl flex flex-col">
+
+            <header class="bg-brand-dark px-6 pt-12 pb-8 relative overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-48 h-48 bg-brand-lime/10 rounded-full blur-2xl"></div>
+                <div class="absolute -left-4 bottom-0 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
+
+                <div class="relative z-10 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-lime flex items-center justify-center">
+                            <i class="ph ph-shield-check text-xl text-brand-dark"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-white">Admin Dashboard</h1>
+                            <p class="text-brand-lime text-xs font-medium">FinTrack Control Panel</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-white/60 text-sm hidden sm:block">{{ .User.Name }}</span>
+                        <a href="/" class="flex items-center gap-1.5 text-white/70 hover:text-white text-sm transition">
+                            <i class="ph ph-house text-base"></i>
+                            <span class="hidden sm:inline">App</span>
+                        </a>
+                        <form action="/logout" method="POST" class="inline">
+                            <button type="submit" class="flex items-center gap-1.5 text-white/70 hover:text-red-400 text-sm transition">
+                                <i class="ph ph-sign-out text-base"></i>
+                                <span class="hidden sm:inline">Logout</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 px-4 sm:px-6 py-6">
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+                                <i class="ph ph-users text-blue-500 text-sm"></i>
+                            </div>
+                            <span class="text-xs font-medium text-brand-muted">Total Users</span>
+                        </div>
+                        <p class="text-2xl font-bold text-brand-dark">{{ .Stats.TotalUsers }}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 rounded-xl bg-brand-lime/20 flex items-center justify-center">
+                                <i class="ph ph-crown text-brand-dark text-sm"></i>
+                            </div>
+                            <span class="text-xs font-medium text-brand-muted">Premium</span>
+                        </div>
+                        <p class="text-2xl font-bold text-brand-dark">{{ .Stats.PremiumUsers }}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center">
+                                <i class="ph ph-arrows-left-right text-purple-500 text-sm"></i>
+                            </div>
+                            <span class="text-xs font-medium text-brand-muted">Tx Bulan Ini</span>
+                        </div>
+                        <p class="text-2xl font-bold text-brand-dark">{{ .Stats.MonthlyTx }}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center">
+                                <i class="ph ph-money text-green-500 text-sm"></i>
+                            </div>
+                            <span class="text-xs font-medium text-brand-muted">Revenue Bulan Ini</span>
+                        </div>
+                        <p class="text-lg font-bold text-brand-dark">{{ .Stats.FormattedRev }}</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div>
+                            <h2 class="text-sm font-bold text-brand-dark">Daftar Users</h2>
+                            <p class="text-xs text-brand-muted mt-0.5">Semua pengguna terdaftar</p>
+                        </div>
+                        <div class="sm:ml-auto">
+                            <div class="relative">
+                                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-brand-muted text-sm"></i>
+                                <input type="text" id="searchInput" placeholder="Cari nama atau email..."
+                                    class="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-brand-lime/50 focus:border-brand-lime transition">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm" id="usersTable">
+                            <thead>
+                                <tr class="bg-gray-50 text-xs text-brand-muted font-semibold uppercase tracking-wide">
+                                    <th class="px-5 py-3 text-left">User</th>
+                                    <th class="px-4 py-3 text-left hidden sm:table-cell">Bergabung</th>
+                                    <th class="px-4 py-3 text-center">Plan</th>
+                                    <th class="px-4 py-3 text-left hidden md:table-cell">Expires</th>
+                                    <th class="px-4 py-3 text-center hidden sm:table-cell">Tx</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50" id="usersBody">
+                                {{ range .Users }}
+                                <tr class="hover:bg-gray-50/50 transition user-row" data-name="{{ .Name }}" data-email="{{ .Email }}">
+                                    <td class="px-5 py-3.5">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-full bg-brand-lime/20 flex items-center justify-center shrink-0">
+                                                <span class="text-xs font-bold text-brand-dark">{{ initials .Name }}</span>
+                                            </div>
+                                            <div>
+                                                <div class="flex items-center gap-1.5">
+                                                    <p class="font-semibold text-brand-dark text-xs">{{ .Name }}</p>
+                                                    {{ if .IsAdmin }}
+                                                    <span class="bg-brand-dark text-brand-lime text-[9px] font-bold px-1.5 py-0.5 rounded-full">ADMIN</span>
+                                                    {{ end }}
+                                                </div>
+                                                <p class="text-xs text-brand-muted">{{ .Email }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-xs text-brand-muted hidden sm:table-cell">{{ .FormattedDate }}</td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        {{ if eq .Plan "premium" }}
+                                        <span class="inline-flex items-center gap-1 bg-brand-lime/20 text-brand-dark text-[10px] font-bold px-2 py-1 rounded-full">
+                                            <i class="ph ph-crown text-xs"></i> Premium
+                                        </span>
+                                        {{ else }}
+                                        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded-full">
+                                            Free
+                                        </span>
+                                        {{ end }}
+                                    </td>
+                                    <td class="px-4 py-3.5 text-xs text-brand-muted hidden md:table-cell">
+                                        {{ if .ExpiresAt }}{{ .ExpiresAt }}{{ else }}-{{ end }}
+                                    </td>
+                                    <td class="px-4 py-3.5 text-center text-xs font-semibold text-brand-dark hidden sm:table-cell">{{ .TotalTx }}</td>
+                                    <td class="px-4 py-3.5">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <button onclick="togglePremium({{ .ID }}, this)"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition active:scale-95
+                                                {{ if eq .Plan "premium" }}bg-amber-100 text-amber-700 hover:bg-amber-200{{ else }}bg-brand-lime/20 text-brand-dark hover:bg-brand-lime/40{{ end }}"
+                                                title="{{ if eq .Plan "premium" }}Downgrade ke Free{{ else }}Upgrade ke Premium{{ end }}">
+                                                <i class="ph ph-crown text-xs"></i>
+                                                <span class="hidden sm:inline">{{ if eq .Plan "premium" }}Downgrade{{ else }}Upgrade{{ end }}</span>
+                                            </button>
+                                            <button onclick="toggleAdmin({{ .ID }}, this)"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition active:scale-95
+                                                {{ if .IsAdmin }}bg-red-100 text-red-600 hover:bg-red-200{{ else }}bg-gray-100 text-gray-600 hover:bg-gray-200{{ end }}"
+                                                title="{{ if .IsAdmin }}Copot Admin{{ else }}Jadikan Admin{{ end }}">
+                                                <i class="ph ph-shield text-xs"></i>
+                                                <span class="hidden sm:inline">{{ if .IsAdmin }}Copot{{ else }}Admin{{ end }}</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                        {{ if not .Users }}
+                        <div class="text-center py-12 text-brand-muted">
+                            <i class="ph ph-users text-4xl mb-2 block"></i>
+                            <p class="text-sm">Belum ada users</p>
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('.user-row').forEach(row => {
+                const name = row.dataset.name.toLowerCase();
+                const email = row.dataset.email.toLowerCase();
+                row.style.display = (name.includes(q) || email.includes(q)) ? '' : 'none';
+            });
+        });
+
+        async function togglePremium(userID, btn) {
+            btn.disabled = true;
+            try {
+                const res = await fetch('/admin/api/users/' + userID + '/toggle-premium', { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) { showToast(data.error || 'Gagal', 'error'); btn.disabled = false; return; }
+                showToast(data.message);
+                setTimeout(() => location.reload(), 1200);
+            } catch(e) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleAdmin(userID, btn) {
+            btn.disabled = true;
+            try {
+                const res = await fetch('/admin/api/users/' + userID + '/toggle-admin', { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) { showToast(data.error || 'Gagal', 'error'); btn.disabled = false; return; }
+                showToast(data.message);
+                setTimeout(() => location.reload(), 1200);
+            } catch(e) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMessage').textContent = message;
+            if (type === 'error') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            } else {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

@@ -1551,6 +1551,7 @@ func main() {
 	RegisterAIRoutes(protected)
 	RegisterDebtRoutes(protected)
 	RegisterSubscriptionRoutes(protected)
+	RegisterAdminRoutes(router, protected)
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
