@@ -277,12 +277,12 @@
             <select name="category_id" id="categorySelect" class="w-full bg-gray-50 border border-gray-100 text-brand-dark font-semibold rounded-2xl pl-14 pr-10 py-4 focus:outline-none focus:border-brand-lime appearance-none text-sm">
                 <optgroup label="Pengeluaran">
                 {{ range .Categories }}{{ if eq .Type "expense" }}
-                <option value="{{ .ID }}">{{ .Name }}</option>
+                <option value="{{ .ID }}" data-type="expense">{{ .Name }}</option>
                 {{ end }}{{ end }}
                 </optgroup>
                 <optgroup label="Pemasukan">
                 {{ range .Categories }}{{ if eq .Type "income" }}
-                <option value="{{ .ID }}">{{ .Name }}</option>
+                <option value="{{ .ID }}" data-type="income">{{ .Name }}</option>
                 {{ end }}{{ end }}
                 </optgroup>
             </select>
@@ -324,10 +324,10 @@
         </div>
 
         <div class="flex gap-3 mt-1">
-            <button type="submit" name="type" value="expense" class="flex-1 bg-red-50 hover:bg-red-100 text-red-500 py-4 rounded-2xl font-bold text-sm transition flex justify-center items-center gap-2 active:scale-95">
+            <button type="submit" id="btnExpense" name="type" value="expense" class="flex-1 bg-red-50 hover:bg-red-100 text-red-500 py-4 rounded-2xl font-bold text-sm transition flex justify-center items-center gap-2 active:scale-95">
                 <i class="ph ph-arrow-down-right text-lg"></i> Pengeluaran
             </button>
-            <button type="submit" name="type" value="income" class="flex-1 bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-sm transition flex justify-center items-center gap-2 active:scale-95">
+            <button type="submit" id="btnIncome" name="type" value="income" class="flex-1 bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-sm transition flex justify-center items-center gap-2 active:scale-95">
                 <i class="ph ph-arrow-up-right text-lg"></i> Pemasukan
             </button>
         </div>
@@ -703,6 +703,46 @@
         showToast('Data struk berhasil diterapkan');
     }
 
+    function updateSubmitButtons() {
+        const select = document.getElementById('categorySelect');
+        const selected = select.options[select.selectedIndex];
+        const catType = selected ? selected.getAttribute('data-type') : null;
+        const btnExpense = document.getElementById('btnExpense');
+        const btnIncome = document.getElementById('btnIncome');
+
+        if (catType === 'expense') {
+            btnExpense.classList.remove('opacity-30', 'cursor-not-allowed');
+            btnIncome.classList.add('opacity-30', 'cursor-not-allowed');
+        } else if (catType === 'income') {
+            btnIncome.classList.remove('opacity-30', 'cursor-not-allowed');
+            btnExpense.classList.add('opacity-30', 'cursor-not-allowed');
+        } else {
+            btnExpense.classList.remove('opacity-30', 'cursor-not-allowed');
+            btnIncome.classList.remove('opacity-30', 'cursor-not-allowed');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const categorySelect = document.getElementById('categorySelect');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', updateSubmitButtons);
+            updateSubmitButtons();
+        }
+
+        const el = document.getElementById('summaryWidgets');
+        const chevron = document.getElementById('summaryChevron');
+        const label = document.getElementById('summaryToggleLabel');
+        if (el && localStorage.getItem('summary_open') === '1') {
+            el.style.maxHeight = el.scrollHeight + 'px';
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+            if (label) label.textContent = 'Sembunyikan';
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('saved') === '1') { showToast('Transaksi berhasil disimpan!'); history.replaceState({}, '', '/'); }
+        if (params.get('error') === 'saldo_kurang') { showToast('Saldo tidak mencukupi!', 'error'); history.replaceState({}, '', '/'); }
+    });
+
     function toggleSummary() {
         const el = document.getElementById('summaryWidgets');
         const chevron = document.getElementById('summaryChevron');
@@ -720,21 +760,6 @@
             localStorage.setItem('summary_open', '1');
         }
     }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const el = document.getElementById('summaryWidgets');
-        const chevron = document.getElementById('summaryChevron');
-        const label = document.getElementById('summaryToggleLabel');
-        if (el && localStorage.getItem('summary_open') === '1') {
-            el.style.maxHeight = el.scrollHeight + 'px';
-            if (chevron) chevron.style.transform = 'rotate(0deg)';
-            if (label) label.textContent = 'Sembunyikan';
-        }
-
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('saved') === '1') { showToast('Transaksi berhasil disimpan!'); history.replaceState({}, '', '/'); }
-        if (params.get('error') === 'saldo_kurang') { showToast('Saldo tidak mencukupi!', 'error'); history.replaceState({}, '', '/'); }
-    });
 </script>
 </body>
 </html>

@@ -562,6 +562,14 @@ func main() {
 		}
 
 		if amount != "" && categoryID != "" {
+			// Validasi category type harus cocok dengan trxType
+			var catType string
+			db.QueryRow("SELECT type FROM categories WHERE id=?", categoryID).Scan(&catType)
+			if catType != "" && catType != trxType {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Kategori tidak sesuai dengan tipe transaksi"})
+				return
+			}
+
 			var parsedDate time.Time
 			if dateStr != "" {
 				parsedDate, err = time.ParseInLocation("2006-01-02T15:04", dateStr, wib)
