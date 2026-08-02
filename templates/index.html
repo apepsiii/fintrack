@@ -39,7 +39,7 @@
     </style>
 </head>
 <body hx-boost="true" class="flex justify-center min-h-screen sm:py-8">
-<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
+<main class="w-full max-w-md bg-white sm:rounded-[2.5rem] shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
 
     <!-- Header -->
     <header class="pt-8 px-6 flex justify-between items-center mb-5">
@@ -743,6 +743,8 @@
             hidden.value = raw;
         });
     });
+
+    function updateSubmitButtons() {
         const select = document.getElementById('categorySelect');
         const selected = select.options[select.selectedIndex];
         const catType = selected ? selected.getAttribute('data-type') : null;
