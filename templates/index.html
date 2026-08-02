@@ -694,10 +694,12 @@
         const note = document.getElementById('ocrNote').value;
 
         document.getElementById('amountInput').value = total;
+        document.getElementById('amountDisplay').value = total > 0 ? formatRupiahInput(String(total)) : '';
         document.getElementById('noteInput').value = note;
 
         if (ocrData && ocrData.category_id) {
             document.getElementById('categorySelect').value = ocrData.category_id;
+            updateSubmitButtons();
         }
 
         if (ocrFile) {
