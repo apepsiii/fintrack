@@ -1,0 +1,22 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts always LF
+*.sh text eol=lf
+
+# Go files LF
+*.go text eol=lf
+
+# HTML templates LF
+*.html text eol=lf
+
+# Config files LF
+*.env text eol=lf
+*.example text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.sql text eol=lf
+
+# Binaries
+*.exe binary
+*.db binary
