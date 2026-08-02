@@ -464,21 +464,23 @@
         const saldoErrorMsg = document.getElementById('saldoErrorMsg');
         saldoError.classList.add('hidden');
 
+        const amountVal = parseInt(document.getElementById('amountInput').value) || 0;
+
+        if (amountVal <= 0) {
+            saldoErrorMsg.textContent = 'Nominal harus lebih dari 0.';
+            saldoError.classList.remove('hidden');
+            saldoError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            e.preventDefault();
+            return;
+        }
+
         if (btn.value === 'expense') {
-            const amountVal = parseInt(document.getElementById('amountInput').value) || 0;
             const balanceRaw = parseInt(document.getElementById('balanceRaw').value) || 0;
-
-            if (amountVal <= 0) {
-                saldoErrorMsg.textContent = 'Nominal harus lebih dari 0.';
-                saldoError.classList.remove('hidden');
-                e.preventDefault();
-                return;
-            }
-
             if (amountVal > balanceRaw) {
                 const formatted = new Intl.NumberFormat('id-ID').format(balanceRaw);
                 saldoErrorMsg.textContent = `Saldo tidak mencukupi. Tersedia: Rp ${formatted}`;
                 saldoError.classList.remove('hidden');
+                saldoError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 e.preventDefault();
                 return;
             }
