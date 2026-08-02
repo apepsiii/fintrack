@@ -519,7 +519,7 @@ func main() {
 
 		// M-4: Validasi tipe transaksi
 		if trxType != "income" && trxType != "expense" {
-			c.Redirect(http.StatusFound, "/?error=invalid_type")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Tipe transaksi tidak valid"})
 			return
 		}
 

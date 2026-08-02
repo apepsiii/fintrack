@@ -491,6 +491,8 @@
 
         const formData = new FormData(this);
         formData.set('type', btn.value);
+        formData.delete('type');
+        formData.append('type', btn.value);
 
         try {
             const res = await fetch('/transaction', { method: 'POST', body: formData });
