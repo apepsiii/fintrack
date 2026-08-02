@@ -253,6 +253,9 @@ func RegisterSavingsRoutes(protected *gin.RouterGroup) {
 	// Create savings
 	protected.POST("/api/savings", func(c *gin.Context) {
 		userID := GetCurrentUserID(c)
+		if !CheckSavingsLimit(c) {
+			return
+		}
 		name := c.PostForm("name")
 		savType := c.PostForm("type")
 		targetStr := c.PostForm("target_amount")

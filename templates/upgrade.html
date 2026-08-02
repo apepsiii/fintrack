@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Upgrade ke Premium - FinTrack">
+    <meta name="theme-color" content="#c3f545">
+    <title>Upgrade Premium - FinTrack</title>
+
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { lime: '#c3f545', dark: '#01381b', light: '#f8faf7', muted: '#809b8d', limeDark: '#a8d93e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; }
+        ::-webkit-scrollbar { display: none; }
+        :root { --nav-height: calc(64px + env(safe-area-inset-bottom)); }
+        body { height: 100dvh; }
+        .nav-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen sm:py-8">
+    <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
+
+        <header class="bg-brand-dark pt-10 px-6 pb-8 relative overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-40 h-40 bg-brand-lime/10 rounded-full blur-2xl"></div>
+            <div class="absolute -left-4 bottom-0 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+
+            <a href="/profile" class="inline-flex items-center gap-2 text-white/60 hover:text-white text-sm mb-6 transition relative z-10">
+                <i class="ph ph-arrow-left text-lg"></i>
+                Kembali
+            </a>
+
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-12 h-12 rounded-2xl bg-brand-lime flex items-center justify-center">
+                        <i class="ph ph-crown text-2xl text-brand-dark"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white leading-tight">FinTrack Premium</h1>
+                        <p class="text-brand-lime text-sm font-semibold">Unlock semua fitur tanpa batas</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 bg-white/10 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-white/60 text-xs font-medium">Harga bulanan</p>
+                        <p class="text-white text-2xl font-bold mt-0.5">Rp 29.000 <span class="text-white/50 text-sm font-normal">/ bulan</span></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-brand-lime text-brand-dark text-[10px] font-bold px-2.5 py-1 rounded-full">PALING POPULER</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="flex-1 overflow-y-auto px-6 py-5 pb-32">
+
+            {{if .PlanInfo.IsPremium}}
+            <div class="bg-brand-lime/20 border border-brand-lime rounded-2xl p-4 mb-5 flex items-center gap-3">
+                <i class="ph ph-check-circle text-2xl text-brand-dark"></i>
+                <div>
+                    <p class="font-bold text-brand-dark text-sm">Kamu sudah Premium!</p>
+                    {{if .PlanInfo.ExpiresAt}}
+                    <p class="text-xs text-brand-muted mt-0.5">Aktif hingga {{ .PlanInfo.ExpiresAt.Format "02 Jan 2006" }}</p>
+                    {{end}}
+                </div>
+            </div>
+            {{else}}
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
+                <p class="text-xs font-bold text-amber-700 mb-2">Paket Free kamu saat ini</p>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-amber-600">Transaksi bulan ini</span>
+                        <span class="text-xs font-bold text-amber-700">{{ .PlanInfo.TxUsedThisMonth }} / {{ .PlanInfo.TxLimit }}</span>
+                    </div>
+                    <div class="w-full bg-amber-200 rounded-full h-1.5">
+                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: {{ if gt .PlanInfo.TxLimit 0 }}{{ mul (div .PlanInfo.TxUsedThisMonth .PlanInfo.TxLimit) 100 }}{{ else }}0{{ end }}%"></div>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-xs text-amber-600">Kategori custom</span>
+                        <span class="text-xs font-bold text-amber-700">{{ .PlanInfo.CatUsed }} / {{ .PlanInfo.CatLimit }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-amber-600">Goals tabungan aktif</span>
+                        <span class="text-xs font-bold text-amber-700">{{ .PlanInfo.SavingsUsed }} / {{ .PlanInfo.SavingsLimit }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-amber-600">Riwayat transaksi</span>
+                        <span class="text-xs font-bold text-amber-700">30 hari terakhir</span>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+
+            <h2 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Yang kamu dapatkan</h2>
+            <div class="bg-gray-50 rounded-2xl p-4 mb-5 border border-gray-100 flex flex-col gap-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="ph ph-infinity text-brand-dark text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">Transaksi Unlimited</p>
+                        <p class="text-xs text-brand-muted">Catat sebanyak apapun tanpa batas per bulan</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="ph ph-tag text-brand-dark text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">Kategori Custom Unlimited</p>
+                        <p class="text-xs text-brand-muted">Buat kategori sesuai kebutuhanmu tanpa batas</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="ph ph-piggy-bank text-brand-dark text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">Goals Tabungan Unlimited</p>
+                        <p class="text-xs text-brand-muted">Kelola banyak tujuan tabungan sekaligus</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="ph ph-clock-clockwise text-brand-dark text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">Riwayat Tidak Terbatas</p>
+                        <p class="text-xs text-brand-muted">Lihat semua histori transaksi dari awal</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-brand-lime/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="ph ph-download-simple text-brand-dark text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">Ekspor Data (CSV, PDF, Backup)</p>
+                        <p class="text-xs text-brand-muted">Download laporan keuangan dalam berbagai format</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="ph ph-robot text-purple-600 text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-brand-dark">FinBot AI Priority</p>
+                        <p class="text-xs text-brand-muted">Analisis keuangan lebih cerdas dengan AI</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">Perbandingan Plan</h2>
+            <div class="rounded-2xl overflow-hidden border border-gray-100 mb-6">
+                <div class="grid grid-cols-3 bg-gray-50 text-[10px] font-bold text-brand-muted uppercase px-4 py-2.5">
+                    <span>Fitur</span>
+                    <span class="text-center">Free</span>
+                    <span class="text-center text-brand-dark">Premium</span>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div class="grid grid-cols-3 px-4 py-3 items-center">
+                        <span class="text-xs text-brand-dark font-medium">Transaksi/bulan</span>
+                        <span class="text-center text-xs text-brand-muted">50</span>
+                        <span class="text-center text-xs font-bold text-brand-dark">∞</span>
+                    </div>
+                    <div class="grid grid-cols-3 px-4 py-3 items-center bg-brand-lime/5">
+                        <span class="text-xs text-brand-dark font-medium">Kategori custom</span>
+                        <span class="text-center text-xs text-brand-muted">3</span>
+                        <span class="text-center text-xs font-bold text-brand-dark">∞</span>
+                    </div>
+                    <div class="grid grid-cols-3 px-4 py-3 items-center">
+                        <span class="text-xs text-brand-dark font-medium">Goals tabungan</span>
+                        <span class="text-center text-xs text-brand-muted">3</span>
+                        <span class="text-center text-xs font-bold text-brand-dark">∞</span>
+                    </div>
+                    <div class="grid grid-cols-3 px-4 py-3 items-center bg-brand-lime/5">
+                        <span class="text-xs text-brand-dark font-medium">Riwayat</span>
+                        <span class="text-center text-xs text-brand-muted">30 hari</span>
+                        <span class="text-center text-xs font-bold text-brand-dark">Semua</span>
+                    </div>
+                    <div class="grid grid-cols-3 px-4 py-3 items-center">
+                        <span class="text-xs text-brand-dark font-medium">Ekspor CSV/PDF</span>
+                        <span class="text-center"><i class="ph ph-x text-red-400 text-sm"></i></span>
+                        <span class="text-center"><i class="ph ph-check text-brand-dark text-sm font-bold"></i></span>
+                    </div>
+                    <div class="grid grid-cols-3 px-4 py-3 items-center bg-brand-lime/5">
+                        <span class="text-xs text-brand-dark font-medium">Backup JSON</span>
+                        <span class="text-center"><i class="ph ph-x text-red-400 text-sm"></i></span>
+                        <span class="text-center"><i class="ph ph-check text-brand-dark text-sm font-bold"></i></span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        {{if not .PlanInfo.IsPremium}}
+        <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-4 nav-safe">
+            {{if .MidtransClientKey}}
+            <button id="btnUpgrade" onclick="startUpgrade()" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-base transition active:scale-95 flex items-center justify-center gap-2 shadow-lg">
+                <i class="ph ph-crown text-xl"></i>
+                Upgrade Sekarang — Rp 29.000/bln
+            </button>
+            {{else}}
+            <div class="bg-gray-100 rounded-2xl p-4 text-center">
+                <p class="text-sm font-semibold text-brand-muted">Payment gateway belum dikonfigurasi.</p>
+                <p class="text-xs text-brand-muted mt-1">Hubungi admin untuk mengaktifkan Premium.</p>
+            </div>
+            {{end}}
+            <p class="text-center text-[10px] text-brand-muted mt-2">Pembayaran aman via Midtrans. Aktif 30 hari.</p>
+        </div>
+        {{end}}
+
+    </main>
+
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden transition-all duration-300 translate-y-[-20px] opacity-0">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            <i id="toastIcon" class="text-xl"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    {{if .MidtransClientKey}}
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ .MidtransClientKey }}"></script>
+    {{end}}
+
+    <script>
+        async function startUpgrade() {
+            const btn = document.getElementById('btnUpgrade');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i> Memproses...';
+
+            try {
+                const res = await fetch('/api/subscription/create', { method: 'POST' });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.error || 'Gagal membuat transaksi', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                    return;
+                }
+
+                if (data.snap_token) {
+                    window.snap.pay(data.snap_token, {
+                        onSuccess: async function(result) {
+                            await verifyPayment(data.order_id, result.transaction_id, result.transaction_status);
+                        },
+                        onPending: function(result) {
+                            showToast('Pembayaran pending, selesaikan pembayaranmu', 'info');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                        },
+                        onError: function(result) {
+                            showToast('Pembayaran gagal', 'error');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                        },
+                        onClose: function() {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                        }
+                    });
+                } else if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                }
+            } catch(e) {
+                showToast('Terjadi kesalahan', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+            }
+        }
+
+        async function verifyPayment(orderID, transactionID, status) {
+            try {
+                const res = await fetch('/api/subscription/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderID, transaction_id: transactionID, status: status })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showToast('Selamat! Kamu sekarang Premium 🎉');
+                    setTimeout(() => window.location.href = '/', 2000);
+                } else {
+                    showToast(data.error || 'Verifikasi gagal', 'error');
+                }
+            } catch(e) {
+                showToast('Gagal verifikasi pembayaran', 'error');
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMessage').textContent = message;
+            if (type === 'error') {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-red-500 text-white';
+                icon.className = 'ph ph-x-circle text-white text-xl';
+            } else {
+                content.className = 'flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold bg-brand-dark text-white';
+                icon.className = 'ph ph-check-circle text-brand-lime text-xl';
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

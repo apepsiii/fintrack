@@ -84,6 +84,9 @@ func RegisterCategoryRoutes(protected *gin.RouterGroup) {
 
 	protected.POST("/api/categories", func(c *gin.Context) {
 		userID := GetCurrentUserID(c)
+		if !CheckCategoryLimit(c) {
+			return
+		}
 		name := c.PostForm("name")
 		catType := c.PostForm("type")
 		icon := c.DefaultPostForm("icon", "ph-tag")

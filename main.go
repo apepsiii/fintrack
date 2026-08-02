@@ -488,6 +488,8 @@ func main() {
 			}
 		}
 
+		planInfo := GetPlanInfo(userID)
+
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Balance":        formatRupiah(balance),
 			"BalanceRaw":     balance,
@@ -500,6 +502,7 @@ func main() {
 			},
 			"TopSavings": topSavings,
 			"TopBudgets": topBudgets,
+			"PlanInfo":   planInfo,
 			"Categories": func() []Category {
 				rows, err := db.Query(`
 					SELECT id, name, type, icon FROM categories
@@ -582,6 +585,11 @@ func main() {
 				io.Copy(out, file)
 				receiptPath = "/static/uploads/" + filename
 			}
+		}
+
+		// Cek limit transaksi free plan
+		if !CheckTxLimit(c) {
+			return
 		}
 
 		if amount != "" && categoryID != "" {
@@ -910,6 +918,15 @@ func main() {
 			args = append(args, filterMonth)
 		}
 
+		historyDays := ""
+		if !IsPremium(userID) {
+			historyDays = nowWIB().AddDate(0, 0, -FreePlanHistoryDays).Format("2006-01-02")
+		}
+		if historyDays != "" {
+			whereClause += " AND t.date >= ?"
+			args = append(args, historyDays)
+		}
+
 		// Count total
 		var totalCount int
 		countArgs := make([]interface{}, len(args))
@@ -1176,6 +1193,7 @@ func main() {
 	exportService := NewExportService()
 
 	protected.GET("/export/transactions/csv", func(c *gin.Context) {
+		if !RequirePremium(c) { return }
 		userID := GetCurrentUserID(c)
 		startDate := c.DefaultQuery("start", time.Now().AddDate(0, -1, 0).Format("2006-01-02"))
 		endDate := c.DefaultQuery("end", time.Now().Format("2006-01-02"))
@@ -1187,6 +1205,7 @@ func main() {
 	})
 
 	protected.GET("/export/budget/csv", func(c *gin.Context) {
+		if !RequirePremium(c) { return }
 		userID := GetCurrentUserID(c)
 		monthYear := c.DefaultQuery("month", time.Now().Format("2006-01"))
 		if err := exportService.ExportBudgetCSV(c, userID, monthYear); err != nil {
@@ -1195,6 +1214,7 @@ func main() {
 	})
 
 	protected.GET("/export/summary/csv", func(c *gin.Context) {
+		if !RequirePremium(c) { return }
 		userID := GetCurrentUserID(c)
 		startDate := c.DefaultQuery("start", time.Now().AddDate(0, -1, 0).Format("2006-01-02"))
 		endDate := c.DefaultQuery("end", time.Now().Format("2006-01-02"))
@@ -1207,6 +1227,7 @@ func main() {
 
 	// PDF report — render HTML printable page
 	protected.GET("/export/pdf", func(c *gin.Context) {
+		if !RequirePremium(c) { return }
 		userID := GetCurrentUserID(c)
 		startDate := c.DefaultQuery("start", time.Now().Format("2006-01-01"))
 		endDate := c.DefaultQuery("end", time.Now().Format("2006-01-02"))
@@ -1302,6 +1323,7 @@ func main() {
 
 	// Backup export — full JSON
 	protected.GET("/export/backup", func(c *gin.Context) {
+		if !RequirePremium(c) { return }
 		userID := GetCurrentUserID(c)
 		if err := exportService.ExportBackupJSON(c, userID); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal export backup"})
@@ -1528,6 +1550,7 @@ func main() {
 	RegisterCategoryRoutes(protected)
 	RegisterAIRoutes(protected)
 	RegisterDebtRoutes(protected)
+	RegisterSubscriptionRoutes(protected)
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {

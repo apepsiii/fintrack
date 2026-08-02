@@ -219,6 +219,39 @@ func RunMigrations(db *sql.DB) error {
 				CREATE INDEX IF NOT EXISTS idx_transactions_idempotency ON transactions(user_id, idempotency_key);
 			`,
 		},
+		{
+			version: 12,
+			name:    "create_subscriptions_table",
+			sql: `
+				CREATE TABLE IF NOT EXISTS subscriptions (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					user_id INTEGER NOT NULL UNIQUE,
+					plan TEXT NOT NULL DEFAULT 'free',
+					status TEXT NOT NULL DEFAULT 'active',
+					started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					expires_at DATETIME,
+					midtrans_order_id TEXT,
+					midtrans_transaction_id TEXT,
+					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					FOREIGN KEY(user_id) REFERENCES users(id)
+				);
+				CREATE TABLE IF NOT EXISTS subscription_payments (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					user_id INTEGER NOT NULL,
+					order_id TEXT NOT NULL UNIQUE,
+					amount INTEGER NOT NULL,
+					plan TEXT NOT NULL,
+					period_months INTEGER NOT NULL DEFAULT 1,
+					status TEXT NOT NULL DEFAULT 'pending',
+					payment_type TEXT,
+					midtrans_transaction_id TEXT,
+					snap_token TEXT,
+					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					paid_at DATETIME,
+					FOREIGN KEY(user_id) REFERENCES users(id)
+				);
+			`,
+		},
 	}
 
 	// Get current migration version
