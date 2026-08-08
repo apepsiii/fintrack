@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"net/http"
@@ -93,7 +93,7 @@ func getAdminUsers() []AdminUserRow {
 }
 
 func RegisterAdminRoutes(router *gin.Engine, protected *gin.RouterGroup) {
-	admin := protected.Group("/admin")
+	admin := protected.Group("/backoffice")
 	admin.Use(AdminMiddleware())
 
 	admin.GET("", func(c *gin.Context) {

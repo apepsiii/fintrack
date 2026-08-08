@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"database/sql"
@@ -531,7 +531,7 @@ func main() {
 		dateStr := c.PostForm("date")
 		idempotencyKey := c.PostForm("idempotency_key")
 
-		// Cek idempotency key — cegah duplikasi
+		// Cek idempotency key â€” cegah duplikasi
 		if idempotencyKey != "" {
 			var exists int
 			db.QueryRow("SELECT COUNT(*) FROM transactions WHERE user_id=? AND idempotency_key=?", userID, idempotencyKey).Scan(&exists)
@@ -1225,7 +1225,7 @@ func main() {
 		}
 	})
 
-	// PDF report — render HTML printable page
+	// PDF report â€” render HTML printable page
 	protected.GET("/export/pdf", func(c *gin.Context) {
 		if !RequirePremium(c) { return }
 		userID := GetCurrentUserID(c)
@@ -1307,7 +1307,7 @@ func main() {
 		if isDeficit { net = -net }
 
 		c.HTML(http.StatusOK, "export_pdf.html", gin.H{
-			"Period":       start.Format("02 Jan 2006") + " — " + end.Format("02 Jan 2006"),
+			"Period":       start.Format("02 Jan 2006") + " â€” " + end.Format("02 Jan 2006"),
 			"GeneratedAt":  now.Format("02 Jan 2006, 15:04"),
 			"TotalIncome":  formatRupiah(totalIncome),
 			"TotalExpense": formatRupiah(totalExpense),
@@ -1321,7 +1321,7 @@ func main() {
 		})
 	})
 
-	// Backup export — full JSON
+	// Backup export â€” full JSON
 	protected.GET("/export/backup", func(c *gin.Context) {
 		if !RequirePremium(c) { return }
 		userID := GetCurrentUserID(c)
@@ -1330,7 +1330,7 @@ func main() {
 		}
 	})
 
-	// Backup import — upload JSON
+	// Backup import â€” upload JSON
 	protected.POST("/import/backup", func(c *gin.Context) {
 		userID := GetCurrentUserID(c)
 		file, _, err := c.Request.FormFile("backup_file")
