@@ -96,7 +96,7 @@ func RegisterAdminRoutes(router *gin.Engine, protected *gin.RouterGroup) {
 	admin := protected.Group("/backoffice")
 	admin.Use(AdminMiddleware())
 
-	admin.GET("", func(c *gin.Context) {
+	admin.GET("/", func(c *gin.Context) {
 		user, _ := GetCurrentUser(c)
 		stats := getAdminStats()
 		users := getAdminUsers()
