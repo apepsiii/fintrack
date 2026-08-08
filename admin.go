@@ -39,7 +39,7 @@ func AdminMiddleware() gin.HandlerFunc {
 		var isAdmin int
 		err := db.QueryRow("SELECT COALESCE(is_admin, 0) FROM users WHERE id = ?", userID).Scan(&isAdmin)
 		if err != nil || isAdmin != 1 {
-			c.HTML(http.StatusForbidden, "404.html", nil)
+			c.HTML(http.StatusForbidden, "403.html", nil)
 			c.Abort()
 			return
 		}
