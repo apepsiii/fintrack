@@ -90,7 +90,7 @@
                         <span class="text-xs font-bold text-amber-700">{{ .PlanInfo.TxUsedThisMonth }} / {{ .PlanInfo.TxLimit }}</span>
                     </div>
                     <div class="w-full bg-amber-200 rounded-full h-1.5">
-                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: {{ if gt .PlanInfo.TxLimit 0 }}{{ mul (div .PlanInfo.TxUsedThisMonth .PlanInfo.TxLimit) 100 }}{{ else }}0{{ end }}%"></div>
+                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: {{ pct .PlanInfo.TxUsedThisMonth .PlanInfo.TxLimit }}%"></div>
                     </div>
                     <div class="flex items-center justify-between mt-1">
                         <span class="text-xs text-amber-600">Kategori custom</span>

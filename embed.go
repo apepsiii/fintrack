@@ -26,6 +26,23 @@ var envExample []byte
 func parseEmbeddedTemplates() (*template.Template, error) {
 	tmpl := template.New("").Funcs(template.FuncMap{
 		"not": func(b bool) bool { return !b },
+		"mul": func(a, b int) int { return a * b },
+		"div": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a / b
+		},
+		"pct": func(used, limit int) int {
+			if limit <= 0 {
+				return 0
+			}
+			v := used * 100 / limit
+			if v > 100 {
+				return 100
+			}
+			return v
+		},
 		"initials": func(s string) string {
 			if len(s) == 0 {
 				return "?"
