@@ -377,10 +377,20 @@ func RegisterSavingsRoutes(protected *gin.RouterGroup) {
 			return
 		}
 
-		// Find linked category IDs
+		// Find linked category IDs — auto-create jika belum ada
 		var transferOutCatID, transferInCatID int
 		db.QueryRow("SELECT id FROM categories WHERE name = 'Transfer ke Tabungan' LIMIT 1").Scan(&transferOutCatID)
+		if transferOutCatID == 0 {
+			res, _ := db.Exec("INSERT INTO categories (name, type, icon) VALUES ('Transfer ke Tabungan', 'expense', 'ph-piggy-bank')")
+			id64, _ := res.LastInsertId()
+			transferOutCatID = int(id64)
+		}
 		db.QueryRow("SELECT id FROM categories WHERE name = 'Tarik dari Tabungan' LIMIT 1").Scan(&transferInCatID)
+		if transferInCatID == 0 {
+			res, _ := db.Exec("INSERT INTO categories (name, type, icon) VALUES ('Tarik dari Tabungan', 'income', 'ph-piggy-bank')")
+			id64, _ := res.LastInsertId()
+			transferInCatID = int(id64)
+		}
 
 		// Auto-create transaction in main account
 		txNote := savingsName
@@ -409,9 +419,9 @@ func RegisterSavingsRoutes(protected *gin.RouterGroup) {
 
 		// Record savings transaction
 		_, err = db.Exec(`
-			INSERT INTO savings_transactions (savings_id, user_id, type, amount, note, linked_transaction_id)
-			VALUES (?, ?, ?, ?, NULLIF(?, ''), NULLIF(?, 0))
-		`, id, userID, txType, amount, note, linkedTxID)
+			INSERT INTO savings_transactions (savings_id, user_id, type, amount, note, date, linked_transaction_id)
+			VALUES (?, ?, ?, ?, NULLIF(?, ''), ?, NULLIF(?, 0))
+		`, id, userID, txType, amount, note, nowWIB().Format("2006-01-02 15:04:05"), linkedTxID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan transaksi"})
 			return
