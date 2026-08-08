@@ -68,7 +68,7 @@ class OfflineDB {
             const tx = this.db.transaction(['transactions'], 'readonly');
             const store = tx.objectStore('transactions');
             const index = store.index('synced');
-            const request = index.getAll(false);
+            const request = index.getAll(IDBKeyRange.only(0));
 
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
