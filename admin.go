@@ -2,6 +2,7 @@
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -32,7 +33,7 @@ func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := GetCurrentUserID(c)
 		if userID == 0 {
-			c.Redirect(http.StatusFound, "/login")
+			c.Redirect(http.StatusFound, "/backoffice/login")
 			c.Abort()
 			return
 		}
@@ -93,6 +94,58 @@ func getAdminUsers() []AdminUserRow {
 }
 
 func RegisterAdminRoutes(router *gin.Engine, protected *gin.RouterGroup) {
+	// Public admin routes — tidak perlu auth
+	router.GET("/backoffice/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "admin_login.html", gin.H{})
+	})
+
+	router.POST("/backoffice/login", func(c *gin.Context) {
+		email := c.PostForm("email")
+		password := c.PostForm("password")
+
+		user, err := AuthenticateUser(email, password)
+		if err != nil {
+			c.HTML(http.StatusUnauthorized, "admin_login.html", gin.H{
+				"error": "Email atau password salah",
+			})
+			return
+		}
+
+		// Cek apakah user adalah admin
+		var isAdmin int
+		db.QueryRow("SELECT COALESCE(is_admin, 0) FROM users WHERE id = ?", user.ID).Scan(&isAdmin)
+		if isAdmin != 1 {
+			c.HTML(http.StatusForbidden, "admin_login.html", gin.H{
+				"error": "Akun ini tidak memiliki akses admin",
+			})
+			return
+		}
+
+		authService := NewAuthService()
+		token, err := authService.GenerateToken(user)
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "admin_login.html", gin.H{
+				"error": "Terjadi kesalahan server",
+			})
+			return
+		}
+
+		isSecure := os.Getenv("GIN_MODE") == "release"
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     "auth_token",
+			Value:    token,
+			MaxAge:   86400,
+			Path:     "/",
+			HttpOnly: true,
+			Secure:   isSecure,
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		logInfo("Admin login: %s", email)
+		c.Redirect(http.StatusFound, "/backoffice/")
+	})
+
+	// Protected admin routes
 	admin := protected.Group("/backoffice")
 	admin.Use(AdminMiddleware())
 
