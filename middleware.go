@@ -58,6 +58,21 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("user_email", claims.Email)
 		c.Set("user_name", claims.Name)
 
+		// Role separation: admin tidak bisa akses route user
+		var isAdmin int
+		db.QueryRow("SELECT COALESCE(is_admin, 0) FROM users WHERE id = ?", claims.UserID).Scan(&isAdmin)
+		c.Set("is_admin", isAdmin == 1)
+
+		if isAdmin == 1 {
+			path := c.Request.URL.Path
+			// Admin hanya boleh akses /backoffice/* dan /logout
+			if !strings.HasPrefix(path, "/backoffice") && path != "/logout" {
+				c.Redirect(http.StatusFound, "/backoffice/")
+				c.Abort()
+				return
+			}
+		}
+
 		c.Next()
 	}
 }
