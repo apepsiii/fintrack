@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -159,7 +159,7 @@
                 {{ range .Debts }}{{ if .IsSettled }}{{ $hasSettled = true }}{{ end }}{{ end }}
 
                 {{ if $hasSettled }}
-                <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-2">Lunas ✓</h3>
+                <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-2">Lunas âœ“</h3>
                 {{ range .Debts }}
                 {{ if .IsSettled }}
                 <a href="/debt/{{ .ID }}" class="block mb-3 debt-item" data-type="{{ .Type }}">
@@ -171,7 +171,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-brand-dark">{{ .Name }}</p>
-                                    <p class="text-[11px] text-brand-muted">{{ .Creditor }} · Rp {{ .FormattedTotal }}</p>
+                                    <p class="text-[11px] text-brand-muted">{{ .Creditor }} Â· Rp {{ .FormattedTotal }}</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -463,7 +463,7 @@ if ("serviceWorker" in navigator) {
     if (e.data && e.data.type === "SYNC_COMPLETE") {
       var b = document.createElement("div");
       b.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";
-      b.textContent = "✓ " + e.data.count + " transaksi offline berhasil disinkronkan";
+      b.textContent = "âœ“ " + e.data.count + " transaksi offline berhasil disinkronkan";
       document.body.appendChild(b);
       setTimeout(function(){ b.remove(); location.reload(); }, 2500);
     }

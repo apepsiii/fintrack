@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -54,7 +54,7 @@
 
     <input type="hidden" id="balanceRaw" value="{{ .BalanceRaw }}">
 
-    <!-- Balance Card — compact -->
+    <!-- Balance Card â€” compact -->
     <section class="px-6 mb-5">
         <div class="bg-brand-dark rounded-3xl px-5 py-5 relative overflow-hidden">
             <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
@@ -95,7 +95,7 @@
     <!-- Scrollable content -->
     <div class="flex-1 overflow-y-auto pb-32">
 
-        <!-- Summary widgets — collapsable, default collapsed -->
+        <!-- Summary widgets â€” collapsable, default collapsed -->
         {{ if or .TopBudgets .TopSavings }}
         <section class="px-6 mb-4">
             <button onclick="toggleSummary()" class="w-full flex justify-between items-center mb-3">
@@ -111,7 +111,7 @@
                 <div class="mb-3">
                     <div class="flex justify-between items-center mb-2">
                         <p class="text-[11px] font-bold text-brand-muted uppercase tracking-wide">Anggaran</p>
-                        <a href="/targets" class="text-[10px] font-semibold text-brand-dark/50 hover:text-brand-dark">Kelola →</a>
+                        <a href="/targets" class="text-[10px] font-semibold text-brand-dark/50 hover:text-brand-dark">Kelola â†’</a>
                     </div>
                     <div class="flex flex-col gap-2">
                         {{ range .TopBudgets }}
@@ -138,7 +138,7 @@
                 <div class="mb-2">
                     <div class="flex justify-between items-center mb-2">
                         <p class="text-[11px] font-bold text-brand-muted uppercase tracking-wide">Tabungan</p>
-                        <a href="/savings" class="text-[10px] font-semibold text-brand-dark/50 hover:text-brand-dark">Lihat semua →</a>
+                        <a href="/savings" class="text-[10px] font-semibold text-brand-dark/50 hover:text-brand-dark">Lihat semua â†’</a>
                     </div>
                     <div class="flex flex-col gap-2">
                         {{ range .TopSavings }}
@@ -181,7 +181,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-bold text-brand-dark leading-tight">{{ .Category }}</p>
-                            <p class="text-[10px] text-brand-muted mt-0.5">{{ .FormattedDate }}{{ if .Note }} · {{ .Note }}{{ end }}</p>
+                            <p class="text-[10px] text-brand-muted mt-0.5">{{ .FormattedDate }}{{ if .Note }} Â· {{ .Note }}{{ end }}</p>
                         </div>
                     </div>
                     <p class="text-sm font-bold {{ if eq .Type "income" }}text-green-600{{ else }}text-red-500{{ end }}">

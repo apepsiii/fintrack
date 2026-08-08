@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -108,7 +108,7 @@
                                     <p class="text-sm font-bold text-brand-dark">{{ .Name }}</p>
                                     <p class="text-[11px] text-brand-muted">
                                         {{ if .Deadline }}Target: {{ .FormattedDeadline }}
-                                            {{ if gt .DaysLeft 0 }} · {{ .DaysLeft }} hari lagi{{ end }}
+                                            {{ if gt .DaysLeft 0 }} Â· {{ .DaysLeft }} hari lagi{{ end }}
                                         {{ else }}Tanpa batas waktu{{ end }}
                                     </p>
                                 </div>
@@ -142,7 +142,7 @@
                 {{ range .Savings }}{{ if .IsCompleted }}{{ $hasCompleted = true }}{{ end }}{{ end }}
 
                 {{ if $hasCompleted }}
-                <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-2">Tercapai 🎉</h3>
+                <h3 class="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 mt-2">Tercapai ðŸŽ‰</h3>
                 {{ range .Savings }}
                 {{ if .IsCompleted }}
                 <a href="/savings/{{ .ID }}" class="block mb-4 saving-item" data-type="{{ .Type }}">
@@ -407,7 +407,7 @@ if ("serviceWorker" in navigator) {
     if (e.data && e.data.type === "SYNC_COMPLETE") {
       var b = document.createElement("div");
       b.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";
-      b.textContent = "✓ " + e.data.count + " transaksi offline berhasil disinkronkan";
+      b.textContent = "âœ“ " + e.data.count + " transaksi offline berhasil disinkronkan";
       document.body.appendChild(b);
       setTimeout(function(){ b.remove(); location.reload(); }, 2500);
     }

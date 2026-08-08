@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -87,7 +87,7 @@
                     {{ if .Debt.IsSettled }}
                     <div class="mt-3 bg-white/20 rounded-xl px-3 py-2 flex items-center gap-2">
                         <i class="ph ph-check-circle text-white text-lg"></i>
-                        <span class="text-white font-bold text-sm">✓ Lunas!</span>
+                        <span class="text-white font-bold text-sm">âœ“ Lunas!</span>
                     </div>
                     {{ end }}
 
@@ -145,7 +145,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-bold text-brand-dark">Pembayaran</p>
-                            <p class="text-[11px] text-brand-muted">{{ .FormattedDate }}{{ if .Note }} · {{ .Note }}{{ end }}</p>
+                            <p class="text-[11px] text-brand-muted">{{ .FormattedDate }}{{ if .Note }} Â· {{ .Note }}{{ end }}</p>
                         </div>
                     </div>
                     <p class="text-sm font-bold text-brand-dark">-Rp {{ .FormattedAmount }}</p>
@@ -257,18 +257,18 @@
         const CREDITOR = "{{ js .Debt.Creditor }}";
         const REMAIN = "{{ js .Debt.FormattedRemain }}";
         const DUE_DATE = "{{ js .Debt.FormattedDueDate }}";
-        const FOOTER = "\n\n—\n_Pesan ini dikirim melalui FinTrack – Aplikasi Keuangan Pribadi_";
+        const FOOTER = "\n\nâ€”\n_Pesan ini dikirim melalui FinTrack â€“ Aplikasi Keuangan Pribadi_";
 
         function sendWAReminder() {
             let msg = '';
             if (DEBT_TYPE === 'lend') {
                 msg = `Halo ${CREDITOR},\n\nSaya ingin mengingatkan dengan hormat bahwa terdapat tagihan piutang atas nama *${DEBT_NAME}* senilai *Rp ${REMAIN}* yang belum dikembalikan.`;
                 if (DUE_DATE) msg += `\n\nJatuh tempo: *${DUE_DATE}*`;
-                msg += `\n\nMohon kiranya dapat dikonfirmasi ketersediaan waktu untuk penyelesaian pembayaran tersebut. Terima kasih atas perhatian dan kerjasamanya. 🙏`;
+                msg += `\n\nMohon kiranya dapat dikonfirmasi ketersediaan waktu untuk penyelesaian pembayaran tersebut. Terima kasih atas perhatian dan kerjasamanya. ðŸ™`;
             } else {
                 msg = `Halo ${CREDITOR},\n\nSaya ingin mengonfirmasi bahwa pembayaran hutang *${DEBT_NAME}* senilai *Rp ${REMAIN}* sedang dalam proses penyelesaian.`;
                 if (DUE_DATE) msg += `\n\nBatas waktu pembayaran: *${DUE_DATE}*`;
-                msg += `\n\nTerima kasih atas kesabaran dan kepercayaan Anda. 🙏`;
+                msg += `\n\nTerima kasih atas kesabaran dan kepercayaan Anda. ðŸ™`;
             }
             msg += FOOTER;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -284,16 +284,16 @@
             if (debtType === 'owe') {
                 msg = `Halo ${creditor},\n\nSaya ingin menginformasikan bahwa telah dilakukan pembayaran hutang *${debtName}* sebesar *Rp ${amountFmt}*.`;
                 if (isSettled) {
-                    msg += `\n\n✅ Hutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas kepercayaan dan kesabaran Anda. 🙏`;
+                    msg += `\n\nâœ… Hutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas kepercayaan dan kesabaran Anda. ðŸ™`;
                 } else {
-                    msg += `\n\nSisa hutang yang belum terbayar: *Rp ${remainFormatted}*.\nSaya akan segera melunasi sisanya. Terima kasih. 🙏`;
+                    msg += `\n\nSisa hutang yang belum terbayar: *Rp ${remainFormatted}*.\nSaya akan segera melunasi sisanya. Terima kasih. ðŸ™`;
                 }
             } else {
                 msg = `Halo ${creditor},\n\nKami mengonfirmasi bahwa pembayaran *${debtName}* sebesar *Rp ${amountFmt}* telah kami terima dengan baik.`;
                 if (isSettled) {
-                    msg += `\n\n✅ Piutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas itikad baik Anda. 🙏`;
+                    msg += `\n\nâœ… Piutang tersebut kini telah *lunas sepenuhnya*. Terima kasih atas itikad baik Anda. ðŸ™`;
                 } else {
-                    msg += `\n\nSisa tagihan yang belum diselesaikan: *Rp ${remainFormatted}*. Terima kasih. 🙏`;
+                    msg += `\n\nSisa tagihan yang belum diselesaikan: *Rp ${remainFormatted}*. Terima kasih. ðŸ™`;
                 }
             }
             msg += FOOTER;
@@ -425,7 +425,7 @@ if ("serviceWorker" in navigator) {
     if (e.data && e.data.type === "SYNC_COMPLETE") {
       var b = document.createElement("div");
       b.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";
-      b.textContent = "✓ " + e.data.count + " transaksi offline berhasil disinkronkan";
+      b.textContent = "âœ“ " + e.data.count + " transaksi offline berhasil disinkronkan";
       document.body.appendChild(b);
       setTimeout(function(){ b.remove(); location.reload(); }, 2500);
     }

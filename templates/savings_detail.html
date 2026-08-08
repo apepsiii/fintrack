@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -75,7 +75,7 @@
                     <div class="mt-3 flex items-center gap-2">
                         <i class="ph ph-calendar text-white/60 text-sm"></i>
                         <span class="text-white/70 text-xs">Deadline: {{ .Savings.FormattedDeadline }}
-                            {{ if gt .Savings.DaysLeft 0 }}· <span class="text-white font-semibold">{{ .Savings.DaysLeft }} hari lagi</span>{{ end }}
+                            {{ if gt .Savings.DaysLeft 0 }}Â· <span class="text-white font-semibold">{{ .Savings.DaysLeft }} hari lagi</span>{{ end }}
                         </span>
                     </div>
                     {{ end }}
@@ -83,7 +83,7 @@
                     {{ if .Savings.IsCompleted }}
                     <div class="mt-3 bg-white/20 rounded-xl px-3 py-2 flex items-center gap-2">
                         <i class="ph ph-check-circle text-white text-lg"></i>
-                        <span class="text-white font-bold text-sm">🎉 Target Tercapai!</span>
+                        <span class="text-white font-bold text-sm">ðŸŽ‰ Target Tercapai!</span>
                     </div>
                     {{ end }}
                 </div>
@@ -135,7 +135,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-bold text-brand-dark">{{ if eq .Type "deposit" }}Setoran{{ else }}Penarikan{{ end }}</p>
-                            <p class="text-[11px] text-brand-muted">{{ .FormattedDate }}{{ if .Note }} · {{ .Note }}{{ end }}</p>
+                            <p class="text-[11px] text-brand-muted">{{ .FormattedDate }}{{ if .Note }} Â· {{ .Note }}{{ end }}</p>
                         </div>
                     </div>
                     <p class="text-sm font-bold {{ if eq .Type "deposit" }}text-brand-dark{{ else }}text-red-500{{ end }}">
@@ -390,7 +390,7 @@ if ("serviceWorker" in navigator) {
     if (e.data && e.data.type === "SYNC_COMPLETE") {
       var b = document.createElement("div");
       b.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";
-      b.textContent = "✓ " + e.data.count + " transaksi offline berhasil disinkronkan";
+      b.textContent = "âœ“ " + e.data.count + " transaksi offline berhasil disinkronkan";
       document.body.appendChild(b);
       setTimeout(function(){ b.remove(); location.reload(); }, 2500);
     }

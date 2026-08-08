@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -37,7 +37,7 @@
         .fab-shadow { box-shadow: 0 -4px 20px rgba(195, 245, 69, 0.2); }
     </style>
 </head>
-<body hx-boost="true" class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
+<body class="flex justify-center min-h-screen sm:py-8 transition-all duration-300">
         <main class="w-full max-w-md bg-white sm:rounded-[2.5rem] overflow-hidden shadow-2xl relative flex flex-col h-[100dvh] sm:h-auto">
         
         <header class="pt-8 px-6 pb-4">
@@ -877,7 +877,7 @@ if ("serviceWorker" in navigator) {
     if (e.data && e.data.type === "SYNC_COMPLETE") {
       var b = document.createElement("div");
       b.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";
-      b.textContent = "✓ " + e.data.count + " transaksi offline berhasil disinkronkan";
+      b.textContent = "âœ“ " + e.data.count + " transaksi offline berhasil disinkronkan";
       document.body.appendChild(b);
       setTimeout(function(){ b.remove(); location.reload(); }, 2500);
     }

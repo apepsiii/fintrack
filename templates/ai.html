@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -39,7 +39,7 @@
             </a>
             <div>
                 <h1 class="text-lg font-bold text-brand-dark leading-tight">FinBot</h1>
-                <p class="text-[10px] text-brand-muted">{{ if .AIConfigured }}{{ .AIModel }} · {{ .AIProvider }}{{ else }}AI belum dikonfigurasi{{ end }}</p>
+                <p class="text-[10px] text-brand-muted">{{ if .AIConfigured }}{{ .AIModel }} Â· {{ .AIProvider }}{{ else }}AI belum dikonfigurasi{{ end }}</p>
             </div>
         </div>
         <div class="w-10 h-10 rounded-full {{ if .AIConfigured }}bg-brand-lime{{ else }}bg-gray-200{{ end }} flex items-center justify-center">
@@ -67,16 +67,16 @@
                 <i class="ph ph-robot text-sm text-brand-dark"></i>
             </div>
             <div class="chat-bubble bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
-                <p class="text-sm text-brand-dark font-medium">Hai! Saya FinBot, asisten keuangan kamu. 👋</p>
+                <p class="text-sm text-brand-dark font-medium">Hai! Saya FinBot, asisten keuangan kamu. ðŸ‘‹</p>
                 <p class="text-xs text-brand-muted mt-1">Tanya apa saja tentang keuangan, atau minta saya analisis kondisi keuanganmu.</p>
             </div>
         </div>
 
         <!-- Quick suggestions -->
         <div class="flex flex-wrap gap-2 ml-10">
-            <button onclick="sendQuick('Analisis kondisi keuangan saya bulan ini')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">📊 Analisis bulan ini</button>
-            <button onclick="sendQuick('Tips hemat uang untuk saya')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">💡 Tips hemat</button>
-            <button onclick="sendQuick('Saran investasi yang cocok untuk saya')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">📈 Saran investasi</button>
+            <button onclick="sendQuick('Analisis kondisi keuangan saya bulan ini')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">ðŸ“Š Analisis bulan ini</button>
+            <button onclick="sendQuick('Tips hemat uang untuk saya')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">ðŸ’¡ Tips hemat</button>
+            <button onclick="sendQuick('Saran investasi yang cocok untuk saya')" class="text-xs bg-brand-lime/20 text-brand-dark px-3 py-1.5 rounded-full font-semibold hover:bg-brand-lime/40 transition">ðŸ“ˆ Saran investasi</button>
         </div>
     </div>
 
@@ -211,7 +211,7 @@ if ("serviceWorker" in navigator) {
     if (e.data && e.data.type === "SYNC_COMPLETE") {
       var b = document.createElement("div");
       b.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#01381b;color:#c3f545;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;";
-      b.textContent = "✓ " + e.data.count + " transaksi offline berhasil disinkronkan";
+      b.textContent = "âœ“ " + e.data.count + " transaksi offline berhasil disinkronkan";
       document.body.appendChild(b);
       setTimeout(function(){ b.remove(); location.reload(); }, 2500);
     }

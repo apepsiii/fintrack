@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id" class="antialiased">
 <head>
     <meta charset="UTF-8">
@@ -177,17 +177,17 @@
                     <div class="grid grid-cols-3 px-4 py-3 items-center">
                         <span class="text-xs text-brand-dark font-medium">Transaksi/bulan</span>
                         <span class="text-center text-xs text-brand-muted">50</span>
-                        <span class="text-center text-xs font-bold text-brand-dark">∞</span>
+                        <span class="text-center text-xs font-bold text-brand-dark">âˆž</span>
                     </div>
                     <div class="grid grid-cols-3 px-4 py-3 items-center bg-brand-lime/5">
                         <span class="text-xs text-brand-dark font-medium">Kategori custom</span>
                         <span class="text-center text-xs text-brand-muted">3</span>
-                        <span class="text-center text-xs font-bold text-brand-dark">∞</span>
+                        <span class="text-center text-xs font-bold text-brand-dark">âˆž</span>
                     </div>
                     <div class="grid grid-cols-3 px-4 py-3 items-center">
                         <span class="text-xs text-brand-dark font-medium">Goals tabungan</span>
                         <span class="text-center text-xs text-brand-muted">3</span>
-                        <span class="text-center text-xs font-bold text-brand-dark">∞</span>
+                        <span class="text-center text-xs font-bold text-brand-dark">âˆž</span>
                     </div>
                     <div class="grid grid-cols-3 px-4 py-3 items-center bg-brand-lime/5">
                         <span class="text-xs text-brand-dark font-medium">Riwayat</span>
@@ -214,7 +214,7 @@
             {{if .MidtransClientKey}}
             <button id="btnUpgrade" onclick="startUpgrade()" class="w-full bg-brand-lime hover:bg-brand-limeDark text-brand-dark py-4 rounded-2xl font-bold text-base transition active:scale-95 flex items-center justify-center gap-2 shadow-lg">
                 <i class="ph ph-crown text-xl"></i>
-                Upgrade Sekarang — Rp 29.000/bln
+                Upgrade Sekarang â€” Rp 29.000/bln
             </button>
             {{else}}
             <div class="bg-gray-100 rounded-2xl p-4 text-center">
@@ -252,7 +252,7 @@
                 if (!res.ok) {
                     showToast(data.error || 'Gagal membuat transaksi', 'error');
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                    btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang â€” Rp 29.000/bln';
                     return;
                 }
 
@@ -264,16 +264,16 @@
                         onPending: function(result) {
                             showToast('Pembayaran pending, selesaikan pembayaranmu', 'info');
                             btn.disabled = false;
-                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang â€” Rp 29.000/bln';
                         },
                         onError: function(result) {
                             showToast('Pembayaran gagal', 'error');
                             btn.disabled = false;
-                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang â€” Rp 29.000/bln';
                         },
                         onClose: function() {
                             btn.disabled = false;
-                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                            btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang â€” Rp 29.000/bln';
                         }
                     });
                 } else if (data.redirect_url) {
@@ -282,7 +282,7 @@
             } catch(e) {
                 showToast('Terjadi kesalahan', 'error');
                 btn.disabled = false;
-                btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang — Rp 29.000/bln';
+                btn.innerHTML = '<i class="ph ph-crown text-xl"></i> Upgrade Sekarang â€” Rp 29.000/bln';
             }
         }
 
@@ -295,7 +295,7 @@
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    showToast('Selamat! Kamu sekarang Premium 🎉');
+                    showToast('Selamat! Kamu sekarang Premium ðŸŽ‰');
                     setTimeout(() => window.location.href = '/', 2000);
                 } else {
                     showToast(data.error || 'Verifikasi gagal', 'error');
